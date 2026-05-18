@@ -1,0 +1,35 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# env
+.env
+.env.local
+.env.*.local
+
+# build
+dist/
+build/
+.svelte-kit/
+.vercel/
+
+# Go
+bin/
+*.exe
+*.test
+coverage.out
+
+# local data
+data/*
+!data/.gitkeep
+
+# SQLite
+*.db
+*.sqlite
+*.sqlite3
+*.db-wal
+*.db-shm
+
+# OS
+.DS_Store
+Thumbs.db
