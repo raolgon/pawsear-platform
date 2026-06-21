@@ -23,7 +23,8 @@
 		return null;
 	};
 
-	const timeLabel = (value?: string | null) => value?.slice(0, 16).replace('T', ' ') ?? 'No time';
+	const timeLabel = (value?: string | null) =>
+		value?.slice(0, 16).replace('T', ' ') ?? 'Set a time for this task';
 </script>
 
 <section class="space-y-3">
@@ -72,7 +73,7 @@
 		<p
 			class="rounded-lg border border-light-gold-200 bg-white p-4 text-sm font-semibold text-light-gold-800"
 		>
-			No bookings yet.
+			Create the first booking to start this household's schedule.
 		</p>
 	{/each}
 </section>
@@ -123,7 +124,7 @@
 		<p
 			class="rounded-lg border border-light-gold-200 bg-white p-4 text-sm font-semibold text-light-gold-800"
 		>
-			No care tasks yet.
+			Care tasks will appear here when this household needs timed care.
 		</p>
 	{/each}
 </section>

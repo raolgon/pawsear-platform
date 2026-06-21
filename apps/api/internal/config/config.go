@@ -7,7 +7,7 @@ import (
 
 const (
 	defaultHTTPAddr     = ":8080"
-	defaultDatabasePath = "../../data/pawsear.db"
+	defaultDatabasePath = "../../data/pawsear-local.db"
 )
 
 type Config struct {
@@ -20,7 +20,7 @@ func Load() (Config, error) {
 	cfg := Config{
 		HTTPAddr:     envOrDefault("PAWSEAR_HTTP_ADDR", defaultHTTPAddr),
 		DatabasePath: envOrDefault("PAWSEAR_DB_PATH", defaultDatabasePath),
-		SeedDemoData: envOrDefault("PAWSEAR_SEED_DEMO", "true") != "false",
+		SeedDemoData: envOrDefault("PAWSEAR_SEED_DEMO", "false") == "true",
 	}
 
 	if cfg.HTTPAddr == "" {

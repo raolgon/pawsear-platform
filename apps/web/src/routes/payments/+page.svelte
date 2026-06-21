@@ -123,7 +123,7 @@
 								>
 								<div class="min-w-0 flex-1">
 									<p class="truncate text-sm font-black">
-										{data.householdNames[householdId] ?? 'Unknown household'}
+										{data.householdNames[householdId] ?? 'Add household details'}
 									</p>
 									<p class="text-xs font-semibold text-[#7b8797]">
 										{householdCharges.length}
@@ -144,7 +144,7 @@
 										<div class="min-w-0">
 											<p class="truncate text-sm font-black">{charge.description}</p>
 											<p class="mt-1 text-xs font-semibold text-[#7b8797]">
-												{charge.dueDate ? `Due ${charge.dueDate.slice(0, 10)}` : 'No due date'} · {charge.status.replaceAll(
+												{charge.dueDate ? `Due ${charge.dueDate.slice(0, 10)}` : 'Add a due date'} · {charge.status.replaceAll(
 													'_',
 													' '
 												)}
@@ -182,8 +182,8 @@
 								<div class="min-w-0 flex-1">
 									<p class="truncate text-sm font-black">
 										{payment.payerContactId
-											? (data.contactNames[payment.payerContactId] ?? 'Unknown payer')
-											: 'Unknown payer'}
+											? (data.contactNames[payment.payerContactId] ?? 'Add payer details')
+											: 'Add who made this payment'}
 									</p>
 									<p class="text-xs font-semibold text-[#7b8797]">
 										{payment.method.replaceAll('_', ' ')} · {payment.receivedAt.slice(0, 10)}
@@ -196,7 +196,7 @@
 							</div>
 						{:else}
 							<p class="p-8 text-center text-sm font-semibold text-[#7b8797]">
-								No payments recorded.
+								Payments will appear here after you record the first one.
 							</p>
 						{/each}
 					</div>

@@ -120,8 +120,11 @@ go run ./cmd/server
 Environment variables:
 
 - `PAWSEAR_HTTP_ADDR`: defaults to `:8080`.
-- `PAWSEAR_DB_PATH`: defaults to `../../data/pawsear.db` when running from `apps/api`.
-- `PAWSEAR_SEED_DEMO`: defaults to `true`; set to `false` to skip demo data.
+- `PAWSEAR_DB_PATH`: defaults to `../../data/pawsear-local.db` when running from `apps/api`.
+- `PAWSEAR_SEED_DEMO`: defaults to `false`; set to `true` only for an explicit disposable demo.
+
+The default local database starts with an empty migrated schema. Demo data is opt-in and should use
+a separate path such as `../../data/pawsear-demo.db`.
 
 Run the web app against the local API:
 

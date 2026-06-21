@@ -9,7 +9,9 @@
 		data.households.map((household) => ({
 			name: household.displayName,
 			slug: household.id,
-			area: [household.neighborhood, household.city].filter(Boolean).join(' · ') || 'No area yet',
+			area:
+				[household.neighborhood, household.city].filter(Boolean).join(' · ') ||
+				'Add an area to simplify routing',
 			pets: 'Contacts and pets',
 			status: household.active ? 'Active' : 'Inactive',
 			next: 'Open profile to add details',

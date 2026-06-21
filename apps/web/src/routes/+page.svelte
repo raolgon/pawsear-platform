@@ -34,7 +34,9 @@
 	const timeLabel = (value?: string | null) => value?.slice(11, 16) || 'Any time';
 	const titleCase = (value: string) =>
 		value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
-	const selectedDate = $derived(data.dashboard.dateStart?.slice(0, 10) || 'Date unavailable');
+	const selectedDate = $derived(
+		data.dashboard.dateStart?.slice(0, 10) || 'Load the schedule to choose a date'
+	);
 
 	const schedule = $derived(
 		[
@@ -45,9 +47,9 @@
 					time: timeLabel(booking.startAt),
 					title: titleCase(booking.serviceType),
 					detail: booking.assignedStaffId
-						? (data.staffNames[booking.assignedStaffId] ?? 'Assigned staff')
-						: 'Unassigned',
-					household: data.householdNames[booking.householdId] ?? 'Unknown household',
+						? (data.staffNames[booking.assignedStaffId] ?? 'Add team member details')
+						: 'Assign a team member',
+					household: data.householdNames[booking.householdId] ?? 'Add household details',
 					status: titleCase(booking.status),
 					tone:
 						booking.status === 'requested'
@@ -70,9 +72,11 @@
 					id: task.id,
 					householdId: task.householdId,
 					time: timeLabel(task.dueAt),
-					title: task.petId ? `${data.petNames[task.petId] ?? 'Pet'} · ${task.title}` : task.title,
+					title: task.petId
+						? `${data.petNames[task.petId] ?? 'Add pet details'} · ${task.title}`
+						: task.title,
 					detail: titleCase(task.taskType),
-					household: data.householdNames[task.householdId] ?? 'Unknown household',
+					household: data.householdNames[task.householdId] ?? 'Add household details',
 					status: titleCase(task.status),
 					tone: task.status === 'pending' ? 'attention' : 'complete',
 					kind:

@@ -66,7 +66,7 @@
 					time: timeLabel(booking.startAt),
 					endTime: timeLabel(booking.endAt),
 					title: booking.serviceType.replaceAll('_', ' '),
-					meta: `${data.householdNames[booking.householdId] ?? 'Unknown household'}${booking.assignedStaffId ? ` · ${data.staffNames[booking.assignedStaffId] ?? 'Unknown staff'}` : ''}`,
+					meta: `${data.householdNames[booking.householdId] ?? 'Add household details'}${booking.assignedStaffId ? ` · ${data.staffNames[booking.assignedStaffId] ?? 'Assign a team member'}` : ' · Assign a team member'}`,
 					status: booking.status,
 					householdId: booking.householdId,
 					tone: booking.status === 'requested' ? 'attention' : 'booking'
@@ -78,7 +78,7 @@
 					time: timeLabel(task.dueAt),
 					endTime: '',
 					title: task.title,
-					meta: `${task.taskType.replaceAll('_', ' ')} · ${data.householdNames[task.householdId] ?? 'Unknown household'}`,
+					meta: `${task.taskType.replaceAll('_', ' ')} · ${data.householdNames[task.householdId] ?? 'Add household details'}`,
 					status: task.status,
 					householdId: task.householdId,
 					tone: task.status === 'pending' ? 'task' : 'booking'
@@ -407,7 +407,7 @@
 							<p class="font-black">
 								{data.dashboard.dateStart
 									? `${timeLabel(data.dashboard.dateStart)}-${timeLabel(data.dashboard.dateEnd)}`
-									: 'No API range'}
+									: 'Start the local API to load dates'}
 							</p>
 						</div>
 					</div>

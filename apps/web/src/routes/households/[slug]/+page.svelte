@@ -204,7 +204,9 @@
 							>
 						</div>
 					{:else}
-						<p class="py-5 text-sm font-semibold text-[#758294]">No contacts yet.</p>
+						<p class="py-5 text-sm font-semibold text-[#758294]">
+							Add the first contact for scheduling, handoffs, or payments.
+						</p>
 					{/each}
 				</div>
 			</section>

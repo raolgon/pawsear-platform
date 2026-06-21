@@ -176,7 +176,7 @@
 							<p class="text-sm font-semibold text-light-gold-800">
 								{[selectedHousehold.neighborhood, selectedHousehold.city]
 									.filter(Boolean)
-									.join(' · ') || 'No area yet'}
+									.join(' · ') || 'Add an area to simplify routing'}
 							</p>
 						</div>
 					{/if}
@@ -337,7 +337,7 @@
 								name="requestedByContactId"
 								class="mt-2 w-full rounded-lg border border-light-gold-200 bg-[#fffdf6] px-3 py-3 font-semibold outline-none focus:border-prussian-blue-700"
 							>
-								<option value="">Not set</option>
+								<option value="">Select who requested the booking</option>
 								{#each data.contacts as contact (`${contact.displayName}-${contact.role}`)}
 									<option
 										value={contact.contactId}
@@ -354,7 +354,7 @@
 								name="assignedStaffId"
 								class="mt-2 w-full rounded-lg border border-light-gold-200 bg-[#fffdf6] px-3 py-3 font-semibold outline-none focus:border-prussian-blue-700"
 							>
-								<option value="">Unassigned</option>
+								<option value="">Assign a team member</option>
 								{#each data.staff.filter((member) => member.active) as member (member.id)}
 									<option value={member.id} selected={member.id === fieldValue('assignedStaffId')}>
 										{member.displayName} · {member.role.replace('_', ' ')}
@@ -387,7 +387,8 @@
 								: 'Household level'}
 						</p>
 						<p>
-							{selectedHousehold?.displayName ?? 'No household'} · {selectedDate} · {selectedStartTime}
+							{selectedHousehold?.displayName ?? 'Select a household to continue'} · {selectedDate} ·
+							{selectedStartTime}
 						</p>
 						<p>{selectedLocationLabel} · {status}</p>
 					</div>
@@ -418,7 +419,9 @@
 						</div>
 						<div>
 							<p class="text-xs font-bold text-light-gold-800 uppercase">Household</p>
-							<p class="font-black">{selectedHousehold?.displayName ?? 'Not selected'}</p>
+							<p class="font-black">
+								{selectedHousehold?.displayName ?? 'Select a household to continue'}
+							</p>
 						</div>
 						<div>
 							<p class="text-xs font-bold text-light-gold-800 uppercase">Pets</p>

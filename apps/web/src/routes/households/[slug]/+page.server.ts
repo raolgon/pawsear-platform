@@ -117,7 +117,9 @@ export const load: PageServerLoad = async ({ fetch, params }) => {
 		household: {
 			id: household.id,
 			name: household.displayName,
-			area: [household.neighborhood, household.city].filter(Boolean).join(' · ') || 'No area yet',
+			area:
+				[household.neighborhood, household.city].filter(Boolean).join(' · ') ||
+				'Add an area to simplify routing',
 			status: household.active ? 'Active' : 'Inactive',
 			alerts: `${bookings.length} bookings · ${charges.length} charges`,
 			balance: openBalance > 0 ? `${money(openBalance)} unpaid` : 'No unpaid balance',
@@ -128,8 +130,8 @@ export const load: PageServerLoad = async ({ fetch, params }) => {
 						status: nextBooking.status
 					}
 				: {
-						time: 'No scheduled work',
-						pets: pets.map((pet) => pet.name).join(' + ') || 'No pets yet',
+						time: 'Create a booking to plan the next visit',
+						pets: pets.map((pet) => pet.name).join(' + ') || 'Add a pet to plan its care',
 						status: 'Open'
 					},
 			pets: pets.map((pet) => ({
@@ -139,19 +141,19 @@ export const load: PageServerLoad = async ({ fetch, params }) => {
 				next: nextBooking
 					? `${nextBooking.serviceType.replaceAll('_', ' ')} today`
 					: 'No upcoming work',
-				care: pet.feedingNotes ?? 'No feeding note yet',
-				note: pet.behaviorNotes ?? pet.medicalNotes ?? 'No special notes yet'
+				care: pet.feedingNotes ?? 'Add feeding instructions for the care team',
+				note: pet.behaviorNotes ?? pet.medicalNotes ?? 'Add medical or behavior notes when needed'
 			})),
 			contacts: contacts.map((contact) => ({
 				name: contact.displayName,
 				role: `${contact.role}${contact.isPrimary ? ' · primary' : ''}${contact.phone ? ' · phone' : ''}`
 			})),
-			notes: household.notes ?? 'No household notes yet.',
+			notes: household.notes ?? 'Add access details or household-wide care notes.',
 			careFood: pets
-				.map((pet) => `${pet.name}: ${pet.feedingNotes ?? 'No feeding note'}`)
+				.map((pet) => `${pet.name}: ${pet.feedingNotes ?? 'add feeding instructions'}`)
 				.join(' · '),
 			careMedicine: pets
-				.map((pet) => `${pet.name}: ${pet.medicalNotes ?? 'No medicine note'}`)
+				.map((pet) => `${pet.name}: ${pet.medicalNotes ?? 'add medicine instructions if needed'}`)
 				.join(' · '),
 			money:
 				charges.length > 0
@@ -161,11 +163,11 @@ export const load: PageServerLoad = async ({ fetch, params }) => {
 									`${charge.description}: ${money(charge.amountMinor, charge.currency)} ${charge.status}`
 							)
 							.join(' · ')
-					: 'No charges yet.',
+					: 'Add the first charge when work is ready to bill.',
 			history:
 				bookings.length > 0
 					? `${bookings.length} bookings loaded from API.`
-					: 'No booking history yet.',
+					: 'Completed and upcoming bookings will build this history.',
 			messages: 'Message import is not connected yet.'
 		}
 	};

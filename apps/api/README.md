@@ -11,8 +11,17 @@ go run ./cmd/server
 Environment variables:
 
 - `PAWSEAR_HTTP_ADDR`: HTTP listen address. Defaults to `:8080`.
-- `PAWSEAR_DB_PATH`: SQLite database path. Defaults to `../../data/pawsear.db` when running from `apps/api`.
-- `PAWSEAR_SEED_DEMO`: Seed generic demo data when the database is empty. Defaults to `true`. Set to `false` to disable.
+- `PAWSEAR_DB_PATH`: SQLite database path. Defaults to `../../data/pawsear-local.db` when running from `apps/api`.
+- `PAWSEAR_SEED_DEMO`: Defaults to `false`. Set it to `true` only when a disposable demo database should be populated.
+
+The default database is intended for real local data and starts empty except for its schema. Existing
+`data/pawsear.db` files from the demo setup are not opened or modified by default.
+
+Explicit demo mode:
+
+```sh
+PAWSEAR_DB_PATH=../../data/pawsear-demo.db PAWSEAR_SEED_DEMO=true go run ./cmd/server
+```
 
 Initial endpoints:
 
