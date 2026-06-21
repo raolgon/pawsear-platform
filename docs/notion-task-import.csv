@@ -1,0 +1,80 @@
+Phase,Task,Status,Priority
+Product Definition,Define the first target user: internal use for the current business,Not started,High
+Product Definition,Define the first service types: dog walk pet sitting at client home home-style boarding visit/check-in,Not started,High
+Product Definition,Define what done means for a service: scheduled confirmed assigned completed charged paid,Not started,High
+Product Definition,Define what data must be local-first and exportable,Not started,High
+Product Definition,Define what is out of scope for the first version: customer app online payments marketplace automated public booking,Not started,High
+Core Data Model,Design Household as the main grouping unit instead of owner,Not started,High
+Core Data Model,Design Contact with roles such as owner partner domestic worker family member payer emergency contact,Not started,High
+Core Data Model,Design many-to-many links between contacts and households,Not started,High
+Core Data Model,Design Pet linked to a household,Not started,High
+Core Data Model,Design pet care information: diet food schedule medicine allergies behavior notes vet notes,Not started,High
+Core Data Model,Design Booking for scheduled services,Not started,High
+Core Data Model,Design CareTask for reminders such as food medicine walks cleaning photo updates,Not started,High
+Core Data Model,Design Charge for work that should be paid,Not started,High
+Core Data Model,Design Payment so one payment can cover multiple charges pets or households,Not started,High
+Core Data Model,Design Conversation and Message records for imported WhatsApp/Telegram context,Not started,Medium
+Internal Operations MVP,Build dashboard for today's work,Not started,High
+Internal Operations MVP,Show scheduled walks visits boarding stays and care tasks,Not started,High
+Internal Operations MVP,Add manual creation of households,Not started,High
+Internal Operations MVP,Add manual creation of contacts,Not started,High
+Internal Operations MVP,Add manual creation of pets,Not started,High
+Internal Operations MVP,Add manual creation of bookings,Not started,High
+Internal Operations MVP,Add recurring care tasks for pets,Not started,High
+Internal Operations MVP,Add status changes for bookings: requested confirmed in progress completed cancelled,Not started,High
+Internal Operations MVP,Add staff assignment for each booking,Not started,Medium
+Internal Operations MVP,Add notes per booking and per pet,Not started,Medium
+Payment Tracking Without Processing,Generate charges from completed services,Not started,High
+Payment Tracking Without Processing,Register payments by cash transfer or other method,Not started,High
+Payment Tracking Without Processing,Allow payments from any contact not only a pet owner,Not started,High
+Payment Tracking Without Processing,Allow one payment to cover multiple charges,Not started,High
+Payment Tracking Without Processing,Allow partial payments,Not started,High
+Payment Tracking Without Processing,Show unpaid partially paid and paid charges,Not started,High
+Payment Tracking Without Processing,Show balance by household,Not started,Medium
+Payment Tracking Without Processing,Show payment history by contact,Not started,Medium
+Message Capture And Assisted Scheduling,Build a manual message paste/import screen,Not started,High
+Message Capture And Assisted Scheduling,Parse pasted WhatsApp/Telegram text into possible service requests,Not started,High
+Message Capture And Assisted Scheduling,Detect possible date time pet names service type and contact,Not started,High
+Message Capture And Assisted Scheduling,Create a detected request review screen before making real bookings,Not started,High
+Message Capture And Assisted Scheduling,Allow confirming editing ignoring or asking for more information,Not started,High
+Message Capture And Assisted Scheduling,Store original message text linked to the detected request,Not started,Medium
+Message Capture And Assisted Scheduling,Add confidence states for ambiguous detections,Not started,Medium
+Calendar And Reminders,Build calendar view by day week and month,Not started,Medium
+Calendar And Reminders,Add reminders for food medicine pickups drop-offs and walks,Not started,High
+Calendar And Reminders,Add overdue task state,Not started,High
+Calendar And Reminders,Add completed task state,Not started,High
+Calendar And Reminders,Add staff-facing daily checklist,Not started,Medium
+Calendar And Reminders,Explore calendar export or sync options,Not started,Low
+Automation Integrations,Prototype Telegram bot ingestion,Not started,Medium
+Automation Integrations,Prototype n8n workflow for message capture,Not started,Medium
+Automation Integrations,Investigate WhatsApp Business API requirements and costs,Not started,Medium
+Automation Integrations,Decide whether WhatsApp automation should start with manual import n8n or official API,Not started,High
+Automation Integrations,Add automation queue for unreviewed detected requests,Not started,Medium
+Automation Integrations,Add audit log for automated changes,Not started,Medium
+Reports And Export,Export households contacts pets bookings charges and payments as JSON,Not started,Medium
+Reports And Export,Export operational reports as CSV,Not started,Medium
+Reports And Export,Export full local database as SQLite,Not started,Medium
+Reports And Export,Export backup bundle as ZIP,Not started,Medium
+Reports And Export,Build report for completed work by date range,Not started,Medium
+Reports And Export,Build report for unpaid work,Not started,Medium
+Reports And Export,Build report for staff workload,Not started,Low
+Future Expansion,Keep architecture ready for multiple businesses,Not started,Medium
+Future Expansion,Keep staff roles flexible for walkers and sitters,Not started,Medium
+Future Expansion,Keep service area/location fields available for future matching,Not started,Low
+Future Expansion,Avoid marketplace assumptions in the MVP,Not started,High
+Future Expansion,Research marketplace requirements only after internal workflow works well,Not started,Low
+Open Questions,What city/timezone should be the default,Not started,High
+Open Questions,How many people currently perform walks or care work,Not started,High
+Open Questions,What are the current service prices and pricing rules,Not started,High
+Open Questions,Are prices per pet per household per visit per day or custom,Not started,High
+Open Questions,Do boarding stays need check-in/check-out times or only dates,Not started,Medium
+Open Questions,What is the most common WhatsApp message format today,Not started,High
+Open Questions,Should the first version run on one laptop a local network or a small private server,Not started,Medium
+Open Questions,Should staff access the app from phone tablet or desktop,Not started,Medium
+Immediate Next Tasks,Confirm MVP scope,Done,High
+Immediate Next Tasks,Draft database schema,Done,High
+Immediate Next Tasks,Create first wireframe for daily operations dashboard,Done,High
+Immediate Next Tasks,Create first wireframe for household contact pet profile,Done,High
+Immediate Next Tasks,Create first wireframe for booking creation,Done,High
+Immediate Next Tasks,Create first wireframe for payment tracking,Done,High
+Immediate Next Tasks,Decide whether to update README with the refined product direction,Done,Medium

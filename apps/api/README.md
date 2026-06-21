@@ -1,0 +1,108 @@
+# Pawsear API
+
+Go backend for Pawsear's local-first operations app.
+
+## Local Development
+
+```sh
+go run ./cmd/server
+```
+
+Environment variables:
+
+- `PAWSEAR_HTTP_ADDR`: HTTP listen address. Defaults to `:8080`.
+- `PAWSEAR_DB_PATH`: SQLite database path. Defaults to `../../data/pawsear.db` when running from `apps/api`.
+- `PAWSEAR_SEED_DEMO`: Seed generic demo data when the database is empty. Defaults to `true`. Set to `false` to disable.
+
+Initial endpoints:
+
+- `GET /health`
+- `GET /api/meta`
+- `GET /api/households`
+- `POST /api/households`
+- `GET /api/households/{id}`
+- `PATCH /api/households/{id}`
+- `GET /api/households/{id}/contacts`
+- `POST /api/households/{id}/contacts`
+- `GET /api/contacts`
+- `POST /api/contacts`
+- `GET /api/contacts/{id}`
+- `PATCH /api/contacts/{id}`
+- `GET /api/pets`
+- `POST /api/pets`
+- `GET /api/pets/{id}`
+- `PATCH /api/pets/{id}`
+- `GET /api/staff`
+- `POST /api/staff`
+- `GET /api/staff/{id}`
+- `PATCH /api/staff/{id}`
+- `GET /api/bookings`
+- `POST /api/bookings`
+- `GET /api/bookings/{id}`
+- `PATCH /api/bookings/{id}`
+- `GET /api/care-tasks`
+- `POST /api/care-tasks`
+- `GET /api/care-tasks/{id}`
+- `PATCH /api/care-tasks/{id}`
+- `GET /api/charges`
+- `POST /api/charges`
+- `GET /api/charges/{id}`
+- `PATCH /api/charges/{id}`
+- `GET /api/payments`
+- `POST /api/payments`
+- `GET /api/payments/{id}`
+- `GET /api/dashboard/today`
+
+MVP backend coverage:
+
+- Manual household, contact, pet, staff, booking, care task, charge, and payment records.
+- Household-contact links with contextual roles.
+- Bookings can include multiple pets.
+- Payments can allocate money to one or more charges.
+- Charge status refreshes to `unpaid`, `partially_paid`, or `paid` after payment allocation.
+- Charge responses include allocated and outstanding amounts, and over-allocation is rejected.
+- Booking and care-task terminal state transitions are validated.
+- Daily dashboard returns bookings, care tasks, and open charges for the selected date.
+
+Not included yet:
+
+- Message parsing/import endpoints.
+- Export endpoints.
+- Authentication or multi-user permission checks.
+
+Current frontend integration:
+
+- SvelteKit server loads read the dashboard, calendar, households, household profiles, charges,
+  and payments from the API.
+- Web forms create households, contacts, pets, and bookings through the API.
+- Web actions cover booking status changes, care-task completion/skipping, charge creation, and
+  partial or multi-charge payment allocation. Editing existing records is not complete yet.
+
+## Database
+
+The API uses SQLite and runs pending migrations on startup.
+
+```sh
+go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.27.0 generate
+```
+
+From this repository, the test command is:
+
+```sh
+GOCACHE="$(pwd)/apps/api/.gocache" go test ./apps/api/...
+```
+
+Real HTTP smoke test:
+
+```sh
+bash apps/api/scripts/smoke.sh
+```
+
+The smoke test starts the API on `127.0.0.1:18080` with a temporary SQLite database, creates a full MVP workflow, checks the dashboard, and verifies a few validation failures.
+
+## Planned Backend Shape
+
+- SQLite migrations live in `db/migrations`.
+- `sqlc` queries live in `db/queries`.
+- Generated `sqlc` code should live in `internal/db/queries`.
+- Domain rules should live in Go services instead of HTTP handlers.

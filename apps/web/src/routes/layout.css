@@ -1,2 +1,105 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
+
+@theme {
+	--color-vanilla-custard-50: #faf8f2;
+	--color-vanilla-custard-100: #f4efe3;
+	--color-vanilla-custard-200: #f0f2a6;
+	--color-vanilla-custard-300: #e9eb7a;
+	--color-vanilla-custard-400: #e2e44e;
+	--color-vanilla-custard-500: #dbde21;
+	--color-vanilla-custard-600: #afb11b;
+	--color-vanilla-custard-700: #838514;
+	--color-vanilla-custard-800: #57590d;
+	--color-vanilla-custard-900: #2c2c07;
+	--color-vanilla-custard-950: #1f1f05;
+
+	--color-light-gold-50: #fbf8f1;
+	--color-light-gold-100: #f6eddc;
+	--color-light-gold-200: #e9dfcc;
+	--color-light-gold-300: #eccf79;
+	--color-light-gold-400: #e6bf4c;
+	--color-light-gold-500: #dfaf20;
+	--color-light-gold-600: #b38c19;
+	--color-light-gold-700: #866913;
+	--color-light-gold-800: #667385;
+	--color-light-gold-900: #2d2306;
+	--color-light-gold-950: #1f1904;
+
+	--color-sandy-brown-50: #fff1e6;
+	--color-sandy-brown-100: #fee3cd;
+	--color-sandy-brown-200: #fdc79b;
+	--color-sandy-brown-300: #fdab68;
+	--color-sandy-brown-400: #fc8f36;
+	--color-sandy-brown-500: #fb7304;
+	--color-sandy-brown-600: #c95c03;
+	--color-sandy-brown-700: #974502;
+	--color-sandy-brown-800: #642e02;
+	--color-sandy-brown-900: #321701;
+	--color-sandy-brown-950: #231001;
+
+	--color-tiger-flame-50: #ffebe5;
+	--color-tiger-flame-100: #ffd8cc;
+	--color-tiger-flame-200: #ffb199;
+	--color-tiger-flame-300: #ff8a66;
+	--color-tiger-flame-400: #ff6333;
+	--color-tiger-flame-500: #ff3c00;
+	--color-tiger-flame-600: #cc3000;
+	--color-tiger-flame-700: #992400;
+	--color-tiger-flame-800: #661800;
+	--color-tiger-flame-900: #330c00;
+	--color-tiger-flame-950: #240800;
+
+	--color-prussian-blue-50: #edf3f9;
+	--color-prussian-blue-100: #d9e6f3;
+	--color-prussian-blue-200: #b4cde5;
+	--color-prussian-blue-300: #83a9cf;
+	--color-prussian-blue-400: #4f82b4;
+	--color-prussian-blue-500: #2f6399;
+	--color-prussian-blue-600: #1c4b7c;
+	--color-prussian-blue-700: #103866;
+	--color-prussian-blue-800: #0b2d57;
+	--color-prussian-blue-900: #092649;
+	--color-prussian-blue-950: #061a38;
+}
+
+:root {
+	font-family:
+		Inter,
+		ui-sans-serif,
+		system-ui,
+		-apple-system,
+		BlinkMacSystemFont,
+		'Segoe UI',
+		sans-serif;
+	color: #071b3b;
+	background: #f7f6f2;
+	font-synthesis: none;
+}
+
+body {
+	margin: 0;
+	min-width: 320px;
+	background: #f7f6f2;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+	transition:
+		border-color 150ms ease,
+		background-color 150ms ease,
+		color 150ms ease,
+		box-shadow 150ms ease;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+	outline: 3px solid rgba(47, 99, 153, 0.22);
+	outline-offset: 2px;
+}

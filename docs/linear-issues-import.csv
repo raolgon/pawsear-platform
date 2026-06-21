@@ -1,0 +1,72 @@
+Title,Description,Status,Priority,Project,Label
+Define the first target user,"Internal use for the current business. This keeps the MVP focused on operations instead of a customer portal.",Todo,High,Pawsear MVP,Product Definition
+Define the first service types,"Confirm the initial service catalog: dog walk, pet sitting at client home, home-style boarding, and visit/check-in.",Todo,High,Pawsear MVP,Product Definition
+Define service completion states,"Define what done means for a service: scheduled, confirmed, assigned, completed, charged, and paid.",Todo,High,Pawsear MVP,Product Definition
+Define local-first data requirements,"Decide which data must work locally and which data must be exportable.",Todo,High,Pawsear MVP,Product Definition
+Define MVP exclusions,"Keep customer app, online payments, marketplace, and automated public booking out of the first version.",Todo,High,Pawsear MVP,Product Definition
+Design Household model,"Use Household as the main grouping unit instead of owner to support partners, domestic workers, family members, and shared care contexts.",Todo,High,Pawsear MVP,Core Data Model
+Design Contact model,"Support roles such as owner, partner, domestic worker, family member, payer, and emergency contact.",Todo,High,Pawsear MVP,Core Data Model
+Design contact-household relationships,"Allow many-to-many links between contacts and households.",Todo,High,Pawsear MVP,Core Data Model
+Design Pet model,"Link pets to households and avoid rigid owner assumptions.",Todo,High,Pawsear MVP,Core Data Model
+Design pet care profile,"Store diet, food schedule, medicine, allergies, behavior notes, and vet notes.",Todo,High,Pawsear MVP,Core Data Model
+Design Booking model,"Represent scheduled services such as walks, visits, sitting, and boarding.",Todo,High,Pawsear MVP,Core Data Model
+Design CareTask model,"Represent reminders such as food, medicine, walks, cleaning, and photo updates.",Todo,High,Pawsear MVP,Core Data Model
+Design Charge model,"Represent work that should be paid after services are completed.",Todo,High,Pawsear MVP,Core Data Model
+Design Payment model,"Allow one payment to cover multiple charges, pets, or households, and allow payer to be any contact.",Todo,High,Pawsear MVP,Core Data Model
+Design Conversation and Message records,"Store imported WhatsApp or Telegram context linked to detected requests and bookings.",Todo,Medium,Pawsear MVP,Core Data Model
+Build today's work dashboard,"Show the operational day view as the main app screen.",Todo,High,Pawsear MVP,Internal Operations MVP
+Show scheduled services and care tasks,"Show walks, visits, boarding stays, and care tasks in the daily dashboard.",Todo,High,Pawsear MVP,Internal Operations MVP
+Add household creation,"Create households manually in the MVP.",Todo,High,Pawsear MVP,Internal Operations MVP
+Add contact creation,"Create contacts manually and link them to households.",Todo,High,Pawsear MVP,Internal Operations MVP
+Add pet creation,"Create pets manually and link them to households.",Todo,High,Pawsear MVP,Internal Operations MVP
+Add booking creation,"Create bookings manually before automation exists.",Todo,High,Pawsear MVP,Internal Operations MVP
+Add recurring care tasks,"Support recurring reminders for feeding, medicine, cleaning, and walks.",Todo,High,Pawsear MVP,Internal Operations MVP
+Add booking statuses,"Support requested, confirmed, in progress, completed, and cancelled states.",Todo,High,Pawsear MVP,Internal Operations MVP
+Add staff assignment,"Assign each booking to a walker or sitter.",Todo,Medium,Pawsear MVP,Internal Operations MVP
+Add notes to bookings and pets,"Support operational notes per booking and persistent care notes per pet.",Todo,Medium,Pawsear MVP,Internal Operations MVP
+Generate charges from completed services,"Create charges when services are completed.",Todo,High,Pawsear MVP,Payments
+Register manual payments,"Track cash, transfer, and other payment methods without processing payments.",Todo,High,Pawsear MVP,Payments
+Allow payment from any contact,"Do not require the payer to be the owner of the pet.",Todo,High,Pawsear MVP,Payments
+Apply one payment to multiple charges,"Support payments that cover multiple services, pets, or households.",Todo,High,Pawsear MVP,Payments
+Support partial payments,"Allow a charge to be partially paid.",Todo,High,Pawsear MVP,Payments
+Show payment states,"Show unpaid, partially paid, and paid charges.",Todo,High,Pawsear MVP,Payments
+Show balance by household,"Calculate outstanding balance by household.",Todo,Medium,Pawsear MVP,Payments
+Show payment history by contact,"Show historical payments grouped by payer/contact.",Todo,Medium,Pawsear MVP,Payments
+Build manual message import screen,"Allow pasting WhatsApp or Telegram messages into the app.",Todo,High,Pawsear MVP,Message Capture
+Parse pasted messages,"Extract possible service requests from pasted WhatsApp or Telegram text.",Todo,High,Pawsear MVP,Message Capture
+Detect scheduling details,"Detect possible date, time, pet names, service type, and contact.",Todo,High,Pawsear MVP,Message Capture
+Build detected request review screen,"Review detected requests before creating real bookings.",Todo,High,Pawsear MVP,Message Capture
+Support detected request decisions,"Allow confirming, editing, ignoring, or asking for more information.",Todo,High,Pawsear MVP,Message Capture
+Store original message text,"Link the original message text to the detected request.",Todo,Medium,Pawsear MVP,Message Capture
+Add confidence states,"Flag ambiguous detected requests instead of assuming correctness.",Todo,Medium,Pawsear MVP,Message Capture
+Build calendar view,"Support day, week, and month views.",Todo,Medium,Pawsear MVP,Calendar And Reminders
+Add care reminders,"Create reminders for food, medicine, pickups, drop-offs, and walks.",Todo,High,Pawsear MVP,Calendar And Reminders
+Add overdue task state,"Show overdue care tasks clearly.",Todo,High,Pawsear MVP,Calendar And Reminders
+Add completed task state,"Track task completion.",Todo,High,Pawsear MVP,Calendar And Reminders
+Add staff daily checklist,"Give staff a focused list of work and care tasks for the day.",Todo,Medium,Pawsear MVP,Calendar And Reminders
+Explore calendar export or sync,"Evaluate external calendar export or sync after core scheduling works.",Todo,Low,Pawsear MVP,Calendar And Reminders
+Prototype Telegram ingestion,"Test a Telegram bot workflow for receiving messages.",Todo,Medium,Pawsear MVP,Automation
+Prototype n8n workflow,"Test n8n message capture and handoff to Pawsear.",Todo,Medium,Pawsear MVP,Automation
+Investigate WhatsApp Business API,"Research API requirements, limits, and costs.",Todo,Medium,Pawsear MVP,Automation
+Choose WhatsApp automation approach,"Decide whether to start with manual import, n8n, or official API.",Todo,High,Pawsear MVP,Automation
+Add automation queue,"Collect unreviewed detected requests in one queue.",Todo,Medium,Pawsear MVP,Automation
+Add audit log,"Track automated changes and their source messages.",Todo,Medium,Pawsear MVP,Automation
+Export data as JSON,"Export households, contacts, pets, bookings, charges, and payments as JSON.",Todo,Medium,Pawsear MVP,Reports And Export
+Export reports as CSV,"Export operational reports as CSV.",Todo,Medium,Pawsear MVP,Reports And Export
+Export database as SQLite,"Allow full local database export.",Todo,Medium,Pawsear MVP,Reports And Export
+Export backup bundle as ZIP,"Create a backup bundle for portability.",Todo,Medium,Pawsear MVP,Reports And Export
+Build completed work report,"Report completed work by date range.",Todo,Medium,Pawsear MVP,Reports And Export
+Build unpaid work report,"Report unpaid or partially paid work.",Todo,Medium,Pawsear MVP,Reports And Export
+Build staff workload report,"Report workload by staff member.",Todo,Low,Pawsear MVP,Reports And Export
+Prepare for multiple businesses,"Keep architecture ready for multiple businesses in the future.",Todo,Medium,Pawsear Future,Future Expansion
+Keep staff roles flexible,"Support walkers and sitters without assuming one fixed role.",Todo,Medium,Pawsear Future,Future Expansion
+Keep service area fields available,"Leave room for future location-based matching.",Todo,Low,Pawsear Future,Future Expansion
+Avoid marketplace assumptions,"Do not let marketplace needs complicate the internal MVP.",Todo,High,Pawsear MVP,Future Expansion
+Research marketplace later,"Only research marketplace requirements after internal workflow works well.",Todo,Low,Pawsear Future,Future Expansion
+Confirm MVP scope,"Review and lock the first MVP scope before implementation.",Done,High,Pawsear MVP,Immediate Next Tasks
+Draft database schema,"Create the first database schema draft from the core model.",Done,High,Pawsear MVP,Immediate Next Tasks
+Wireframe daily operations dashboard,"Create the first wireframe for the daily operations dashboard.",Done,High,Pawsear MVP,Immediate Next Tasks
+Wireframe household profile,"Create the first wireframe for household, contact, and pet profile.",Done,High,Pawsear MVP,Immediate Next Tasks
+Wireframe booking creation,"Create the first wireframe for booking creation.",Done,High,Pawsear MVP,Immediate Next Tasks
+Wireframe payment tracking,"Create the first wireframe for payment tracking.",Done,High,Pawsear MVP,Immediate Next Tasks
+Update README product direction,"Decide whether to update README with the refined product direction.",Done,Medium,Pawsear MVP,Immediate Next Tasks

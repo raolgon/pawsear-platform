@@ -15,6 +15,7 @@ build/
 
 # Go
 bin/
+.gocache/
 *.exe
 *.test
 coverage.out
