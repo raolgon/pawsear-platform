@@ -141,6 +141,17 @@ func (s *Service) Update(ctx context.Context, householdID string, input UpdateIn
 	return s.store.Update(ctx, params)
 }
 
+func (s *Service) Delete(ctx context.Context, householdID string, confirmationName string) error {
+	current, err := s.Get(ctx, householdID)
+	if err != nil {
+		return err
+	}
+	if strings.TrimSpace(confirmationName) != current.DisplayName {
+		return fmt.Errorf("%w: confirmation name does not match", ErrInvalid)
+	}
+	return s.store.Delete(ctx, current.ID)
+}
+
 func normalizeCreate(input CreateInput) (CreateInput, error) {
 	input.DisplayName = strings.TrimSpace(input.DisplayName)
 	if input.DisplayName == "" {

@@ -50,17 +50,20 @@ may include a note when part of its foundation already exists.
 - [x] Allow partial payments and reject allocations above the outstanding balance.
 - [x] Show unpaid, partially paid, and paid charges in the read-only payment view.
 - [x] Show accurate outstanding balance by household after payment allocations.
+- [x] Issue an immutable internal payment receipt with matching PDF and PNG downloads.
+- [ ] Add a configurable business profile and logo to payment receipts.
+- [ ] Add operator-approved receipt delivery after the local receipt flow is validated.
 - [ ] Show payment history by contact. Filtering exists in the API; a contact-facing view is pending.
 
 ## Phase 4: Message Capture And Assisted Scheduling
 
-- [ ] Build a manual message paste/import screen.
+- [x] Build a manual message paste/import screen.
 - [ ] Parse pasted WhatsApp/Telegram text into possible service requests.
 - [ ] Detect possible date, time, pet names, service type, and contact.
-- [ ] Create a "detected request" review screen before making real bookings.
+- [x] Create a "detected request" review screen before making real bookings.
 - [ ] Allow confirming, editing, ignoring, or asking for more information.
-- [ ] Store original message text linked to the detected request.
-- [ ] Add confidence states for ambiguous detections.
+- [x] Store original message text linked to the detected request.
+- [x] Add confidence states for ambiguous detections.
 
 ## Phase 5: Calendar And Reminders
 
@@ -73,11 +76,11 @@ may include a note when part of its foundation already exists.
 
 ## Phase 6: Automation Integrations
 
-- [ ] Prototype Telegram bot ingestion.
-- [ ] Prototype n8n workflow for message capture.
+- [x] Prototype Telegram bot ingestion. The importable workflow is ready; a bot credential and public HTTPS webhook are required to activate it.
+- [x] Prototype n8n workflow for message capture.
 - [ ] Investigate WhatsApp Business API requirements and costs.
 - [ ] Decide whether WhatsApp automation should start with manual import, n8n, or official API.
-- [ ] Add automation queue for unreviewed detected requests.
+- [x] Add automation queue for unreviewed detected requests.
 - [ ] Add audit log for automated changes.
 
 ## Phase 7: Reports And Export

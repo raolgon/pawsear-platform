@@ -11,26 +11,70 @@ import (
 
 type Querier interface {
 	AddBookingPet(ctx context.Context, arg AddBookingPetParams) error
+	ContactBelongsToHousehold(ctx context.Context, arg ContactBelongsToHouseholdParams) (int64, error)
+	ConvertDetectedRequest(ctx context.Context, arg ConvertDetectedRequestParams) (DetectedRequest, error)
 	CreateBooking(ctx context.Context, arg CreateBookingParams) (Booking, error)
+	CreateBookingSource(ctx context.Context, arg CreateBookingSourceParams) error
 	CreateCareTask(ctx context.Context, arg CreateCareTaskParams) (CareTask, error)
 	CreateCharge(ctx context.Context, arg CreateChargeParams) (Charge, error)
 	CreateContact(ctx context.Context, arg CreateContactParams) (Contact, error)
+	CreateContactChannelIdentity(ctx context.Context, arg CreateContactChannelIdentityParams) (ContactChannelIdentity, error)
+	CreateConversation(ctx context.Context, arg CreateConversationParams) (Conversation, error)
+	CreateDetectedRequest(ctx context.Context, arg CreateDetectedRequestParams) (DetectedRequest, error)
 	CreateHousehold(ctx context.Context, arg CreateHouseholdParams) (Household, error)
+	CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error)
+	CreateOutboundMessage(ctx context.Context, arg CreateOutboundMessageParams) (OutboundMessage, error)
 	CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error)
 	CreatePaymentAllocation(ctx context.Context, arg CreatePaymentAllocationParams) (PaymentAllocation, error)
+	CreatePaymentReceipt(ctx context.Context, arg CreatePaymentReceiptParams) (PaymentReceipt, error)
 	CreatePet(ctx context.Context, arg CreatePetParams) (Pet, error)
 	CreateStaffMember(ctx context.Context, arg CreateStaffMemberParams) (StaffMember, error)
 	DeleteBookingPets(ctx context.Context, bookingID string) error
+	DeleteContactIdentitiesIfOtherwiseOrphaned(ctx context.Context, contactID string) error
+	DeleteContactIfOrphaned(ctx context.Context, contactID string) error
+	DeleteHouseholdBookingPets(ctx context.Context, targetHouseholdID string) error
+	DeleteHouseholdBookingSources(ctx context.Context, targetHouseholdID string) error
+	DeleteHouseholdBookings(ctx context.Context, targetHouseholdID string) error
+	DeleteHouseholdCareRoutines(ctx context.Context, targetHouseholdID string) error
+	DeleteHouseholdCareTasks(ctx context.Context, targetHouseholdID string) error
+	DeleteHouseholdCharges(ctx context.Context, targetHouseholdID string) error
+	DeleteHouseholdContactLinks(ctx context.Context, targetHouseholdID string) error
+	DeleteHouseholdConversations(ctx context.Context, targetHouseholdID sql.NullString) error
+	DeleteHouseholdDetectedRequests(ctx context.Context, targetHouseholdID sql.NullString) error
+	DeleteHouseholdMessages(ctx context.Context, targetHouseholdID sql.NullString) error
+	DeleteHouseholdOutboundMessages(ctx context.Context, targetHouseholdID sql.NullString) error
+	DeleteHouseholdPaymentAllocations(ctx context.Context, targetHouseholdID string) error
+	DeleteHouseholdPetDiets(ctx context.Context, targetHouseholdID string) error
+	DeleteHouseholdPetMedications(ctx context.Context, targetHouseholdID string) error
+	DeleteHouseholdPets(ctx context.Context, targetHouseholdID string) error
+	DeleteHouseholdRecord(ctx context.Context, targetHouseholdID string) (int64, error)
 	GetAllocatedTotalForCharge(ctx context.Context, chargeID string) (int64, error)
 	GetBooking(ctx context.Context, id string) (Booking, error)
 	GetCareTask(ctx context.Context, id string) (CareTask, error)
 	GetCharge(ctx context.Context, id string) (Charge, error)
 	GetContact(ctx context.Context, id string) (Contact, error)
+	GetContactByChannelID(ctx context.Context, arg GetContactByChannelIDParams) (Contact, error)
+	GetContactByChannelIdentity(ctx context.Context, arg GetContactByChannelIdentityParams) (Contact, error)
+	GetConversationByExternalID(ctx context.Context, arg GetConversationByExternalIDParams) (Conversation, error)
+	GetDetectedRequestByMessage(ctx context.Context, messageID string) (DetectedRequest, error)
+	GetDetectedRequestDetail(ctx context.Context, id string) (GetDetectedRequestDetailRow, error)
 	GetHousehold(ctx context.Context, id string) (Household, error)
+	GetImportedMessageByExternalID(ctx context.Context, arg GetImportedMessageByExternalIDParams) (Message, error)
+	GetOutboundMessage(ctx context.Context, id string) (OutboundMessage, error)
 	GetPayment(ctx context.Context, id string) (Payment, error)
+	GetPaymentReceipt(ctx context.Context, id string) (PaymentReceipt, error)
+	GetPaymentReceiptByPayment(ctx context.Context, paymentID string) (PaymentReceipt, error)
+	GetPaymentReceiptSource(ctx context.Context, id string) (GetPaymentReceiptSourceRow, error)
+	GetPendingOutboundMessageForRequest(ctx context.Context, detectedRequestID string) (OutboundMessage, error)
 	GetPet(ctx context.Context, id string) (Pet, error)
+	GetPrimaryHouseholdForContact(ctx context.Context, contactID string) (Household, error)
 	GetStaffMember(ctx context.Context, id string) (StaffMember, error)
+	LinkContactTelegramIdentity(ctx context.Context, arg LinkContactTelegramIdentityParams) (Contact, error)
+	LinkContactWhatsappIdentity(ctx context.Context, arg LinkContactWhatsappIdentityParams) (Contact, error)
+	LinkConversationContactContext(ctx context.Context, arg LinkConversationContactContextParams) error
+	LinkDetectedRequestContext(ctx context.Context, arg LinkDetectedRequestContextParams) error
 	LinkHouseholdContact(ctx context.Context, arg LinkHouseholdContactParams) error
+	LinkMessageSenderContact(ctx context.Context, arg LinkMessageSenderContactParams) error
 	ListBookingPets(ctx context.Context, bookingID string) ([]ListBookingPetsRow, error)
 	ListBookings(ctx context.Context) ([]Booking, error)
 	ListBookingsByHousehold(ctx context.Context, householdID string) ([]Booking, error)
@@ -41,21 +85,34 @@ type Querier interface {
 	ListCareTasksByRange(ctx context.Context, arg ListCareTasksByRangeParams) ([]CareTask, error)
 	ListCharges(ctx context.Context) ([]Charge, error)
 	ListChargesByHousehold(ctx context.Context, householdID string) ([]Charge, error)
+	ListContactHouseholdPets(ctx context.Context, contactID string) ([]ListContactHouseholdPetsRow, error)
+	ListContactHouseholdResolutionOptions(ctx context.Context) ([]ListContactHouseholdResolutionOptionsRow, error)
 	ListContacts(ctx context.Context) ([]Contact, error)
+	ListDetectedRequests(ctx context.Context, arg ListDetectedRequestsParams) ([]ListDetectedRequestsRow, error)
+	ListHouseholdContactIDsForDeletion(ctx context.Context, targetHouseholdID string) ([]string, error)
 	ListHouseholdContacts(ctx context.Context, householdID string) ([]ListHouseholdContactsRow, error)
 	ListHouseholds(ctx context.Context) ([]Household, error)
+	ListHouseholdsForContactResolution(ctx context.Context, contactID string) ([]Household, error)
 	ListOpenCharges(ctx context.Context) ([]Charge, error)
+	ListOutboundMessages(ctx context.Context, arg ListOutboundMessagesParams) ([]OutboundMessage, error)
 	ListPaymentAllocations(ctx context.Context, paymentID string) ([]PaymentAllocation, error)
+	ListPaymentReceiptAllocationSources(ctx context.Context, paymentID string) ([]ListPaymentReceiptAllocationSourcesRow, error)
 	ListPayments(ctx context.Context) ([]Payment, error)
 	ListPaymentsByContact(ctx context.Context, payerContactID sql.NullString) ([]Payment, error)
 	ListPets(ctx context.Context) ([]Pet, error)
 	ListPetsByHousehold(ctx context.Context, householdID string) ([]Pet, error)
 	ListStaffMembers(ctx context.Context) ([]StaffMember, error)
+	MarkOutboundMessageFailed(ctx context.Context, arg MarkOutboundMessageFailedParams) (OutboundMessage, error)
+	MarkOutboundMessageSent(ctx context.Context, arg MarkOutboundMessageSentParams) (OutboundMessage, error)
 	RefreshChargeStatus(ctx context.Context, arg RefreshChargeStatusParams) (Charge, error)
+	SetConversationHouseholdByMessage(ctx context.Context, arg SetConversationHouseholdByMessageParams) error
+	SetDetectedRequestHousehold(ctx context.Context, arg SetDetectedRequestHouseholdParams) error
 	UpdateBooking(ctx context.Context, arg UpdateBookingParams) (Booking, error)
 	UpdateCareTask(ctx context.Context, arg UpdateCareTaskParams) (CareTask, error)
 	UpdateCharge(ctx context.Context, arg UpdateChargeParams) (Charge, error)
 	UpdateContact(ctx context.Context, arg UpdateContactParams) (Contact, error)
+	UpdateConversationFromImport(ctx context.Context, arg UpdateConversationFromImportParams) (Conversation, error)
+	UpdateDetectedRequestStatus(ctx context.Context, arg UpdateDetectedRequestStatusParams) (DetectedRequest, error)
 	UpdateHousehold(ctx context.Context, arg UpdateHouseholdParams) (Household, error)
 	UpdatePet(ctx context.Context, arg UpdatePetParams) (Pet, error)
 	UpdateStaffMember(ctx context.Context, arg UpdateStaffMemberParams) (StaffMember, error)

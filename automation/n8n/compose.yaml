@@ -1,0 +1,23 @@
+name: pawsear-automation
+
+services:
+  n8n:
+    image: ${N8N_IMAGE:-docker.n8n.io/n8nio/n8n:2.26.8}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${N8N_PORT:-5678}:5678"
+    environment:
+      GENERIC_TIMEZONE: ${N8N_TIMEZONE:-America/Mexico_City}
+      TZ: ${N8N_TIMEZONE:-America/Mexico_City}
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      N8N_SECURE_COOKIE: "false"
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: "168"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:

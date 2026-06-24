@@ -99,6 +99,15 @@ type Contact struct {
 	UpdatedAt   string         `json:"updated_at"`
 }
 
+type ContactChannelIdentity struct {
+	ID             string `json:"id"`
+	ContactID      string `json:"contact_id"`
+	Channel        string `json:"channel"`
+	ExternalUserID string `json:"external_user_id"`
+	CreatedAt      string `json:"created_at"`
+	UpdatedAt      string `json:"updated_at"`
+}
+
 type Conversation struct {
 	ID                     string         `json:"id"`
 	Channel                string         `json:"channel"`
@@ -159,6 +168,22 @@ type Message struct {
 	SentAt            sql.NullString `json:"sent_at"`
 	ImportedAt        string         `json:"imported_at"`
 	ExternalMessageID sql.NullString `json:"external_message_id"`
+	SenderExternalID  sql.NullString `json:"sender_external_id"`
+}
+
+type OutboundMessage struct {
+	ID                  string         `json:"id"`
+	DetectedRequestID   string         `json:"detected_request_id"`
+	Channel             string         `json:"channel"`
+	RecipientExternalID string         `json:"recipient_external_id"`
+	TemplateKey         string         `json:"template_key"`
+	Body                string         `json:"body"`
+	Status              string         `json:"status"`
+	Attempts            int64          `json:"attempts"`
+	LastError           sql.NullString `json:"last_error"`
+	CreatedAt           string         `json:"created_at"`
+	SentAt              sql.NullString `json:"sent_at"`
+	UpdatedAt           string         `json:"updated_at"`
 }
 
 type Payment struct {
@@ -180,6 +205,15 @@ type PaymentAllocation struct {
 	ChargeID    string `json:"charge_id"`
 	AmountMinor int64  `json:"amount_minor"`
 	CreatedAt   string `json:"created_at"`
+}
+
+type PaymentReceipt struct {
+	ID            string `json:"id"`
+	PaymentID     string `json:"payment_id"`
+	ReceiptNumber string `json:"receipt_number"`
+	SnapshotJson  string `json:"snapshot_json"`
+	IssuedAt      string `json:"issued_at"`
+	CreatedAt     string `json:"created_at"`
 }
 
 type Pet struct {

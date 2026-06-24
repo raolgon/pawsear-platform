@@ -1,0 +1,115 @@
+{
+  "id": "0137fdf1-b515-430f-b152-920c90dd24c3",
+  "name": "Pawsear - Telegram ingestion",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": ["message"],
+        "additionalFields": {}
+      },
+      "id": "a1a0d13d-c558-4864-a0fb-f206c923a818",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "channel", "name": "channel", "type": "string", "value": "telegram" },
+            { "id": "conversation", "name": "externalConversationId", "type": "string", "value": "={{ String($json.message.chat.id) }}" },
+            { "id": "message", "name": "externalMessageId", "type": "string", "value": "={{ String($json.message.message_id) }}" },
+            { "id": "sender", "name": "senderExternalId", "type": "string", "value": "={{ String($json.message.from.id) }}" },
+            { "id": "direction", "name": "direction", "type": "string", "value": "inbound" },
+            { "id": "body", "name": "body", "type": "string", "value": "={{ $json.message.text || $json.message.caption || '' }}" },
+            { "id": "sent", "name": "sentAt", "type": "string", "value": "={{ DateTime.fromSeconds($json.message.date).toUTC().toISO() }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d7776764-b14c-43dd-806e-0b268833bc14",
+      "name": "Normalize Telegram message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "message-has-body",
+              "leftValue": "={{ $json.body }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "07111192-0ee9-4fe7-a907-c0cfadbf7e97",
+      "name": "Has text to review?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [480, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8080/api/message-imports",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env.PAWSEAR_AUTOMATION_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "d311312b-89d8-4653-a4c1-e59da37e4707",
+      "name": "Import into Pawsear",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [740, -80],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [[{ "node": "Normalize Telegram message", "type": "main", "index": 0 }]]
+    },
+    "Normalize Telegram message": {
+      "main": [[{ "node": "Has text to review?", "type": "main", "index": 0 }]]
+    },
+    "Has text to review?": {
+      "main": [[{ "node": "Import into Pawsear", "type": "main", "index": 0 }], []]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "executionTimeout": 120
+  },
+  "versionId": "be5bce8a-631c-4afa-a907-b4ea30da5e2f",
+  "meta": { "templateCredsSetupCompleted": false },
+  "tags": []
+}

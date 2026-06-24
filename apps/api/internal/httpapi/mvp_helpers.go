@@ -98,6 +98,10 @@ func writeNotFound(w http.ResponseWriter, err error) {
 	writeAPIError(w, http.StatusNotFound, "not_found", err)
 }
 
+func writeConflict(w http.ResponseWriter, err error) {
+	writeAPIError(w, http.StatusConflict, "conflict", err)
+}
+
 func writeStoreError(w http.ResponseWriter, err error) {
 	if errors.Is(err, sql.ErrNoRows) {
 		writeNotFound(w, err)

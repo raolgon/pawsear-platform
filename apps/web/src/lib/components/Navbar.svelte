@@ -7,6 +7,7 @@
 		CircleHelp,
 		House,
 		LayoutDashboard,
+		MessageSquareText,
 		PawPrint,
 		ReceiptText
 	} from 'lucide-svelte';
@@ -14,6 +15,7 @@
 	const navItems = [
 		{ label: 'Today', href: resolve('/'), icon: LayoutDashboard },
 		{ label: 'Calendar', href: resolve('/calendar'), icon: CalendarDays },
+		{ label: 'Requests', href: resolve('/requests'), icon: MessageSquareText },
 		{ label: 'Households', href: resolve('/households'), icon: House },
 		{ label: 'Payments', href: resolve('/payments'), icon: ReceiptText }
 	];
@@ -92,7 +94,7 @@
 	class="fixed inset-x-0 bottom-0 z-40 border-t border-[#e5dfd2] bg-[#fffdf8]/97 px-2 pt-2 pb-[max(0.45rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden"
 	aria-label="Mobile navigation"
 >
-	<div class="grid grid-cols-4">
+	<div class="grid grid-cols-5">
 		{#each navItems as item (item.href)}
 			{@const Icon = item.icon}
 			<a

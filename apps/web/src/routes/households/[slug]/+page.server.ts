@@ -248,5 +248,17 @@ export const actions: Actions = {
 		});
 		if (result.error) return fail(400, { error: result.error });
 		throw redirect(303, `/households/${params.slug}`);
+	},
+	deleteHousehold: async ({ fetch, params, request }) => {
+		const formData = await request.formData();
+		const confirmationName = String(formData.get('confirmationName') ?? '').trim();
+		if (!confirmationName) {
+			return fail(400, { error: 'Type the household name to confirm permanent deletion.' });
+		}
+		const result = await sendAPI(fetch, `/api/households/${params.slug}`, 'DELETE', {
+			confirmationName
+		});
+		if (result.error) return fail(result.status === 404 ? 404 : 400, { error: result.error });
+		throw redirect(303, '/households');
 	}
 };

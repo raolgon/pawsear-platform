@@ -112,6 +112,6 @@ export const actions: Actions = {
 			allocations
 		});
 		if (result.error) return fail(400, { error: result.error });
-		throw redirect(303, '/payments');
+		throw redirect(303, `/payments/${result.data.id}`);
 	}
 };

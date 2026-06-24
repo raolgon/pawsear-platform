@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import PaymentForm from '$lib/components/PaymentForm.svelte';
 	import type { ActionData, PageData } from './$types';
 	import { AlertTriangle, ChevronDown, ChevronRight, ReceiptText, Wallet } from 'lucide-svelte';
@@ -174,7 +175,10 @@
 					</div>
 					<div class="divide-y divide-[#ece6db]">
 						{#each data.payments.slice(0, 8) as payment (payment.id)}
-							<div class="flex items-center gap-3 px-5 py-4">
+							<a
+								href={resolve('/payments/[id]', { id: payment.id })}
+								class="flex items-center gap-3 px-5 py-4 transition hover:bg-[#fffdf8]"
+							>
 								<span
 									class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#eaf5e6] text-[#397546]"
 									><Wallet size={19} /></span
@@ -193,7 +197,7 @@
 									{money(payment.amountMinor, payment.currency)}
 								</p>
 								<ChevronRight size={17} class="text-[#85909d]" />
-							</div>
+							</a>
 						{:else}
 							<p class="p-8 text-center text-sm font-semibold text-[#7b8797]">
 								Payments will appear here after you record the first one.

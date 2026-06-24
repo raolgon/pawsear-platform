@@ -34,6 +34,21 @@ func (h *mvpHandler) listContacts(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"contacts": contactListResponse(contacts)})
 }
 
+func (h *mvpHandler) listContactHouseholdResolutionOptions(w http.ResponseWriter, r *http.Request) {
+	rows, err := h.queries.ListContactHouseholdResolutionOptions(r.Context())
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	items := make([]map[string]string, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, map[string]string{
+			"contactId": row.ContactID, "householdId": row.HouseholdID, "householdName": row.HouseholdName,
+		})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"contactHouseholds": items})
+}
+
 func (h *mvpHandler) createContact(w http.ResponseWriter, r *http.Request) {
 	var input contactInput
 	if err := readJSON(r, &input); err != nil {
@@ -48,6 +63,10 @@ func (h *mvpHandler) createContact(w http.ResponseWriter, r *http.Request) {
 	}
 	created, err := h.queries.CreateContact(r.Context(), params)
 	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	if err := h.syncContactChannelIdentities(r, created); err != nil {
 		writeStoreError(w, err)
 		return
 	}
@@ -85,7 +104,35 @@ func (h *mvpHandler) updateContact(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	if err := h.syncContactChannelIdentities(r, updated); err != nil {
+		writeStoreError(w, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, contactResponse(updated))
+}
+
+func (h *mvpHandler) syncContactChannelIdentities(r *http.Request, contact dbqueries.Contact) error {
+	identities := []struct {
+		channel string
+		value   sql.NullString
+	}{{"telegram", contact.TelegramID}, {"whatsapp", contact.WhatsappID}}
+	now := timestamp(h.now)
+	for _, identity := range identities {
+		if !identity.value.Valid {
+			continue
+		}
+		id, err := newRecordID()
+		if err != nil {
+			return err
+		}
+		if _, err := h.queries.CreateContactChannelIdentity(r.Context(), dbqueries.CreateContactChannelIdentityParams{
+			ID: id, ContactID: contact.ID, Channel: identity.channel, ExternalUserID: identity.value.String,
+			CreatedAt: now, UpdatedAt: now,
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (h *mvpHandler) listHouseholdContacts(w http.ResponseWriter, r *http.Request) {

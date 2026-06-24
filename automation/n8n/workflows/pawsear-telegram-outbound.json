@@ -1,0 +1,114 @@
+{
+  "id": "6c5832cc-d878-446d-bff0-0a86d1ca036c",
+  "name": "Pawsear - Telegram outbound",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "minutes", "minutesInterval": 1 }]
+        }
+      },
+      "id": "ae495621-594c-486d-88fa-0255a2df43ab",
+      "name": "Every minute",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8080/api/automation/outbound-messages?status=pending&limit=20",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env.PAWSEAR_AUTOMATION_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fe1fda80-c53b-4102-af90-8d98a24e9de1",
+      "name": "Load pending replies",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "outboundMessages",
+        "options": {}
+      },
+      "id": "c6c48829-f4a2-4766-9c3f-8437a017daec",
+      "name": "Each outbound message",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [480, 0]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.recipientExternalId }}",
+        "text": "={{ $json.body }}",
+        "additionalFields": {}
+      },
+      "id": "205cc9fd-68f7-42c1-9031-0fd9bbf82c69",
+      "name": "Send Telegram reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [720, 0],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'http://api:8080/api/automation/outbound-messages/' + $('Each outbound message').item.json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env.PAWSEAR_AUTOMATION_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ status: 'sent' }) }}",
+        "options": {}
+      },
+      "id": "81479fa4-bbed-4381-8eed-ab12a324feeb",
+      "name": "Mark reply sent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 0]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every minute": {
+      "main": [[{ "node": "Load pending replies", "type": "main", "index": 0 }]]
+    },
+    "Load pending replies": {
+      "main": [[{ "node": "Each outbound message", "type": "main", "index": 0 }]]
+    },
+    "Each outbound message": {
+      "main": [[{ "node": "Send Telegram reply", "type": "main", "index": 0 }]]
+    },
+    "Send Telegram reply": {
+      "main": [[{ "node": "Mark reply sent", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "executionTimeout": 120
+  },
+  "versionId": "4e5a9276-f98d-4ddb-a8f2-a0f22a3dc3ed",
+  "meta": { "templateCredsSetupCompleted": false },
+  "tags": []
+}

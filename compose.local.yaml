@@ -1,0 +1,92 @@
+name: pawsear
+
+services:
+  api:
+    build:
+      context: ./apps/api
+    restart: unless-stopped
+    environment:
+      PAWSEAR_HTTP_ADDR: :8080
+      PAWSEAR_DB_PATH: /data/pawsear-local.db
+      PAWSEAR_SEED_DEMO: "false"
+      PAWSEAR_AUTOMATION_TOKEN: ${PAWSEAR_AUTOMATION_TOKEN:-}
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    environment:
+      PAWSEAR_API_BASE_URL: http://api:8080
+      PAWSEAR_AUTOMATION_TOKEN: ${PAWSEAR_AUTOMATION_TOKEN:-}
+      ORIGIN: http://localhost:5173
+    ports:
+      - "127.0.0.1:5173:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  n8n:
+    image: ${N8N_IMAGE:-docker.n8n.io/n8nio/n8n:2.26.8}
+    restart: unless-stopped
+    environment:
+      GENERIC_TIMEZONE: ${N8N_TIMEZONE:-America/Mexico_City}
+      TZ: ${N8N_TIMEZONE:-America/Mexico_City}
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      N8N_PROXY_HOPS: "1"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      N8N_SECURE_COOKIE: "false"
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      PAWSEAR_AUTOMATION_TOKEN: ${PAWSEAR_AUTOMATION_TOKEN:-}
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: "168"
+    ports:
+      - "127.0.0.1:5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      api:
+        condition: service_healthy
+
+  webhook-proxy:
+    image: python:3.12-alpine
+    restart: unless-stopped
+    command: ["python3", "/app/webhook_proxy.py"]
+    environment:
+      PAWSEAR_N8N_HOST: n8n
+      PAWSEAR_N8N_PORT: "5678"
+      PAWSEAR_WEBHOOK_PROXY_PORT: "5677"
+    volumes:
+      - ./automation/n8n/scripts/webhook_proxy.py:/app/webhook_proxy.py:ro
+    expose:
+      - "5677"
+    depends_on:
+      - n8n
+
+volumes:
+  n8n_data:
+    name: pawsear-automation_n8n_data
+    external: true

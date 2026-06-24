@@ -96,15 +96,20 @@ Functional now:
 - Care-task completion or skipping with a required reason.
 - Manual charge creation and payment entry with explicit per-charge allocations.
 - Outstanding balances that subtract previous payment allocations.
+- Telegram ingestion through n8n with authenticated, idempotent delivery into the review queue.
+- Conservative local message suggestions for service, date, time, duration, and known pets.
+- Pending/history request views with reviewed conversion into the agenda.
 
 Partial or presentation-only:
 
 - The calendar has experimental day, week, and month navigation; only the selected day's operational data is loaded.
 - Editing existing household, contact, pet, and booking details is still API-only.
+- Message interpretation is intentionally limited to clear Spanish phrases; ambiguous language remains for manual review.
+- A pinned local n8n Compose setup, generic webhook workflow, and Telegram ingestion workflow are available in `automation/n8n`; channel credentials are not stored in the repository.
 
 Not implemented yet:
 
-- Assisted WhatsApp or Telegram message import and review.
+- Official WhatsApp ingestion.
 - Local export and restoration flows.
 - Authentication and multi-user permissions.
 
@@ -122,6 +127,7 @@ Environment variables:
 - `PAWSEAR_HTTP_ADDR`: defaults to `:8080`.
 - `PAWSEAR_DB_PATH`: defaults to `../../data/pawsear-local.db` when running from `apps/api`.
 - `PAWSEAR_SEED_DEMO`: defaults to `false`; set to `true` only for an explicit disposable demo.
+- `PAWSEAR_AUTOMATION_TOKEN`: optional bearer token shared with trusted automation clients.
 
 The default local database starts with an empty migrated schema. Demo data is opt-in and should use
 a separate path such as `../../data/pawsear-demo.db`.
@@ -146,6 +152,29 @@ pnpm check
 pnpm lint
 pnpm build
 ```
+
+## Unified Local Stack
+
+The preferred WSL2 setup runs Pawsear and n8n on one private Docker network while
+preserving SQLite in `data/` and n8n state in its existing Docker volume:
+
+```sh
+DOCKER_BUILDKIT=0 docker compose --env-file automation/n8n/.env -f compose.local.yaml up -d
+```
+
+Open Pawsear at `http://localhost:5173` and n8n at `http://localhost:5678`. Inside
+n8n, Pawsear is available at `http://api:8080`; HTTP Request nodes must not use
+`localhost`, because that would refer to the n8n container itself.
+
+Check or stop the stack without deleting local data:
+
+```sh
+docker compose --env-file automation/n8n/.env -f compose.local.yaml ps
+docker compose --env-file automation/n8n/.env -f compose.local.yaml stop
+```
+
+Do not add `-v` when stopping or removing containers. The n8n volume contains the
+local account, credentials, workflows, and encryption key.
 
 ## Product Workflow
 

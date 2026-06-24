@@ -35,6 +35,15 @@ type Staff = {
 	active: boolean;
 };
 
+type DetectedRequest = {
+	householdId?: string | null;
+	contactId?: string | null;
+	body: string;
+	serviceType?: string | null;
+	startAt?: string | null;
+	endAt?: string | null;
+};
+
 type CreatedBooking = {
 	id?: string;
 	message?: string;
@@ -51,6 +60,7 @@ const optional = (formData: FormData, key: string) => {
 };
 
 const valuesFrom = (formData: FormData) => ({
+	detectedRequestId: value(formData, 'detectedRequestId'),
 	householdId: value(formData, 'householdId'),
 	serviceType: value(formData, 'serviceType'),
 	status: value(formData, 'status'),
@@ -70,13 +80,35 @@ const localDateTimeToISO = (date: string, time: string) => {
 	return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString();
 };
 
+const normalizedWords = (value: string) =>
+	value
+		.normalize('NFD')
+		.replace(/\p{Diacritic}/gu, '')
+		.toLocaleLowerCase('es')
+		.split(/[^\p{Letter}\p{Number}]+/u)
+		.filter(Boolean);
+
+const messageMentionsPet = (body: string, petName: string) => {
+	const message = normalizedWords(body);
+	const name = normalizedWords(petName);
+	return name.length > 0 && name.every((word) => message.includes(word));
+};
+
 export const load: PageServerLoad = async ({ fetch, url }) => {
+	const detectedRequestId = url.searchParams.get('requestId') ?? '';
+	const detectedRequestResult = detectedRequestId
+		? await fetchAPI<DetectedRequest>(fetch, `/api/detected-requests/${detectedRequestId}`, {
+				body: ''
+			})
+		: null;
+	const detectedRequest = detectedRequestResult?.data;
 	const requestedPetId = url.searchParams.get('petId') ?? '';
 	const requestedHouseholdId = url.searchParams.get('householdId') ?? '';
 	const petResult = requestedPetId
 		? await fetchAPI<Pet>(fetch, `/api/pets/${requestedPetId}`, null as unknown as Pet)
 		: null;
-	const selectedHouseholdId = requestedHouseholdId || petResult?.data?.householdId || '';
+	const selectedHouseholdId =
+		requestedHouseholdId || petResult?.data?.householdId || detectedRequest?.householdId || '';
 
 	const [households, pets, contacts, staff] = await Promise.all([
 		fetchAPI<{ households: Household[] }>(fetch, '/api/households', { households: [] }),
@@ -98,6 +130,19 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 	const now = new Date();
 	const roundedHour = new Date(now.getTime() + 60 * 60 * 1000);
 	roundedHour.setMinutes(0, 0, 0);
+	const detectedStartAt = detectedRequest?.startAt ?? '';
+	const detectedEndAt = detectedRequest?.endAt ?? '';
+	const detectedDuration =
+		detectedStartAt && detectedEndAt
+			? Math.round(
+					(new Date(detectedEndAt).getTime() - new Date(detectedStartAt).getTime()) / 60000
+				)
+			: 45;
+	const suggestedPetIds = detectedRequest?.body
+		? pets.data.pets
+				.filter((pet) => messageMentionsPet(detectedRequest.body, pet.name))
+				.map((pet) => pet.id)
+		: [];
 
 	return {
 		apiConnected: households.connected && pets.connected && staff.connected,
@@ -105,10 +150,19 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 		pets: pets.data.pets,
 		contacts: contacts.data.contacts,
 		staff: staff.data.staff,
+		detectedRequestId,
 		selectedHouseholdId,
-		selectedPetIds: requestedPetId ? [requestedPetId] : [],
-		defaultDate: roundedHour.toISOString().slice(0, 10),
-		defaultStartTime: roundedHour.toTimeString().slice(0, 5)
+		selectedPetIds: requestedPetId ? [requestedPetId] : suggestedPetIds,
+		defaultServiceType: detectedRequest?.serviceType ?? 'walk',
+		defaultRequestedByContactId: detectedRequest?.contactId ?? '',
+		defaultDate:
+			(url.searchParams.get('date') ?? '') ||
+			detectedStartAt.slice(0, 10) ||
+			roundedHour.toISOString().slice(0, 10),
+		defaultStartTime: detectedStartAt.slice(11, 16) || roundedHour.toTimeString().slice(0, 5),
+		defaultDurationMinutes: [30, 45, 60, 90, 120, 1440].includes(detectedDuration)
+			? String(detectedDuration)
+			: '45'
 	};
 };
 
@@ -131,7 +185,10 @@ export const actions: Actions = {
 		}
 
 		const endAt = new Date(new Date(startAt).getTime() + durationMinutes * 60 * 1000).toISOString();
-		const result = await sendAPI<CreatedBooking>(fetch, '/api/bookings', 'POST', {
+		const bookingPath = values.detectedRequestId
+			? `/api/detected-requests/${values.detectedRequestId}/bookings`
+			: '/api/bookings';
+		const result = await sendAPI<CreatedBooking>(fetch, bookingPath, 'POST', {
 			householdId,
 			serviceType,
 			status,
@@ -140,16 +197,24 @@ export const actions: Actions = {
 			locationType,
 			requestedByContactId: optional(formData, 'requestedByContactId'),
 			assignedStaffId: optional(formData, 'assignedStaffId'),
-			source: values.source || 'manual',
+			...(values.detectedRequestId ? {} : { source: values.source || 'manual' }),
 			notes: optional(formData, 'notes'),
 			petIds: values.petIds
 		});
 
 		if (!result.connected) return fail(503, { values, error: 'The API is not available.' });
-		if (result.error || !result.data.id) {
+		const bookingId =
+			result.data.id ??
+			('booking' in result.data && typeof result.data.booking === 'object' && result.data.booking
+				? (result.data.booking as { id?: string }).id
+				: undefined);
+		if (result.error || !bookingId) {
 			return fail(400, { values, error: result.error ?? 'Could not create booking.' });
 		}
 
+		if (values.detectedRequestId) {
+			throw redirect(303, `/calendar?date=${values.date}`);
+		}
 		throw redirect(303, `/households/${householdId}`);
 	}
 };

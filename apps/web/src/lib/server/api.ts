@@ -43,7 +43,7 @@ export async function fetchAPI<T>(
 export async function sendAPI<T>(
 	fetchFn: typeof fetch,
 	path: string,
-	method: 'POST' | 'PATCH',
+	method: 'POST' | 'PATCH' | 'DELETE',
 	body: unknown
 ): Promise<ApiResult<T>> {
 	const baseURL = env.PAWSEAR_API_BASE_URL ?? DEFAULT_API_BASE_URL;
@@ -51,7 +51,10 @@ export async function sendAPI<T>(
 		const response = await fetchFn(`${baseURL}${path}`, {
 			method,
 			headers: {
-				'Content-Type': 'application/json'
+				'Content-Type': 'application/json',
+				...(env.PAWSEAR_AUTOMATION_TOKEN
+					? { Authorization: `Bearer ${env.PAWSEAR_AUTOMATION_TOKEN}` }
+					: {})
 			},
 			body: JSON.stringify(body)
 		});

@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import type { ActionData, PageData } from './$types';
 	import { untrack } from 'svelte';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import {
 		ArrowLeft,
 		CalendarDays,
@@ -40,13 +41,15 @@
 	const selectedHousehold = $derived(
 		data.households.find((household) => household.id === selectedHouseholdId)
 	);
-	let selectedService = $state(fieldValue('serviceType') || 'walk');
+	let selectedService = $state(untrack(() => fieldValue('serviceType') || data.defaultServiceType));
 	let status = $state(fieldValue('status') || 'requested');
 	let locationType = $state(fieldValue('locationType') || 'household_home');
 	let selectedPetIds = $state<string[]>(untrack(() => form?.values?.petIds ?? data.selectedPetIds));
 	let selectedDate = $state(untrack(() => fieldValue('date') || data.defaultDate));
 	let selectedStartTime = $state(untrack(() => fieldValue('startTime') || data.defaultStartTime));
-	let durationMinutes = $state(fieldValue('durationMinutes') || '45');
+	let durationMinutes = $state(
+		untrack(() => fieldValue('durationMinutes') || data.defaultDurationMinutes)
+	);
 	const selectedPets = $derived(data.pets.filter((pet) => selectedPetIds.includes(pet.id)));
 	const selectedServiceLabel = $derived(
 		services.find((service) => service.value === selectedService)?.label ?? 'Walk'
@@ -58,9 +61,10 @@
 
 	const changeHousehold = (event: Event) => {
 		const select = event.currentTarget as HTMLSelectElement;
-		window.location.href = select.value
-			? `/bookings/new?householdId=${select.value}`
-			: '/bookings/new';
+		const params = new SvelteURLSearchParams();
+		if (select.value) params.set('householdId', select.value);
+		if (data.detectedRequestId) params.set('requestId', data.detectedRequestId);
+		window.location.href = params.size ? `/bookings/new?${params.toString()}` : '/bookings/new';
 	};
 </script>
 
@@ -84,14 +88,25 @@
 					Back
 				</a>
 				<p class="text-xs font-bold tracking-wide text-light-gold-800 uppercase">Booking</p>
-				<h1 class="text-2xl leading-tight font-black">Create booking</h1>
+				<h1 class="text-2xl leading-tight font-black">
+					{data.detectedRequestId ? 'Review and accept request' : 'Create booking'}
+				</h1>
 			</header>
 
 			<form id="booking-form" method="POST" class="space-y-4 px-4 py-4 lg:px-0 lg:pb-10">
+				<input type="hidden" name="detectedRequestId" value={data.detectedRequestId} />
 				<input type="hidden" name="serviceType" value={selectedService} />
 				<input type="hidden" name="status" value={status} />
 				<input type="hidden" name="locationType" value={locationType} />
 				<input type="hidden" name="source" value="manual" />
+
+				{#if data.detectedRequestId}
+					<section
+						class="rounded-lg border border-[#bfd5ef] bg-[#edf4ff] p-3 text-sm font-bold text-[#1c5c98]"
+					>
+						Confirming this form accepts the Telegram request and adds the booking to the agenda.
+					</section>
+				{/if}
 
 				{#if form?.error}
 					<section
@@ -341,7 +356,8 @@
 								{#each data.contacts as contact (`${contact.displayName}-${contact.role}`)}
 									<option
 										value={contact.contactId}
-										selected={contact.contactId === fieldValue('requestedByContactId')}
+										selected={contact.contactId ===
+											(fieldValue('requestedByContactId') || data.defaultRequestedByContactId)}
 									>
 										{contact.displayName} · {contact.role}
 									</option>

@@ -13,6 +13,7 @@ Environment variables:
 - `PAWSEAR_HTTP_ADDR`: HTTP listen address. Defaults to `:8080`.
 - `PAWSEAR_DB_PATH`: SQLite database path. Defaults to `../../data/pawsear-local.db` when running from `apps/api`.
 - `PAWSEAR_SEED_DEMO`: Defaults to `false`. Set it to `true` only when a disposable demo database should be populated.
+- `PAWSEAR_AUTOMATION_TOKEN`: Optional bearer token protecting automated message imports. Set it before exposing an n8n webhook outside the local machine.
 
 The default database is intended for real local data and starts empty except for its schema. Existing
 `data/pawsear.db` files from the demo setup are not opened or modified by default.
@@ -31,9 +32,16 @@ Initial endpoints:
 - `POST /api/households`
 - `GET /api/households/{id}`
 - `PATCH /api/households/{id}`
+- `DELETE /api/households/{id}` (requires the exact household name and deletes its dependent operational data)
 - `GET /api/households/{id}/contacts`
 - `POST /api/households/{id}/contacts`
+- `POST /api/detected-requests/{id}/replies`
+- `POST /api/detected-requests/{id}/household-link`
+- `GET /api/outbound-messages`
+- `GET /api/automation/outbound-messages` (automation token required)
+- `PATCH /api/automation/outbound-messages/{id}` (automation token required)
 - `GET /api/contacts`
+- `GET /api/contact-household-links`
 - `POST /api/contacts`
 - `GET /api/contacts/{id}`
 - `PATCH /api/contacts/{id}`
@@ -60,7 +68,16 @@ Initial endpoints:
 - `GET /api/payments`
 - `POST /api/payments`
 - `GET /api/payments/{id}`
+- `POST /api/payments/{id}/receipt`
+- `GET /api/payments/{id}/receipt`
+- `GET /api/payments/{id}/receipt/png`
+- `GET /api/payments/{id}/receipt/pdf`
 - `GET /api/dashboard/today`
+- `POST /api/message-imports`
+- `GET /api/detected-requests`
+- `GET /api/detected-requests/{id}`
+- `PATCH /api/detected-requests/{id}`
+- `POST /api/detected-requests/{id}/bookings`
 
 MVP backend coverage:
 
@@ -68,14 +85,22 @@ MVP backend coverage:
 - Household-contact links with contextual roles.
 - Bookings can include multiple pets.
 - Payments can allocate money to one or more charges.
+- Payments can issue one immutable internal receipt and download matching PDF and PNG artifacts.
 - Charge status refreshes to `unpaid`, `partially_paid`, or `paid` after payment allocation.
 - Charge responses include allocated and outstanding amounts, and over-allocation is rejected.
 - Booking and care-task terminal state transitions are validated.
 - Daily dashboard returns bookings, care tasks, and open charges for the selected date.
+- Message imports preserve source text, match known channel contacts, avoid duplicate external events, and create a human-review queue.
+- Reviewed requests convert transactionally into bookings with `booking_sources` traceability.
+
+OpenAPI and integration guide:
+
+- `openapi.yaml`
+- `../../docs/api/message-automation.md`
 
 Not included yet:
 
-- Message parsing/import endpoints.
+- Automatic natural-language message parsing.
 - Export endpoints.
 - Authentication or multi-user permission checks.
 
@@ -86,6 +111,7 @@ Current frontend integration:
 - Web forms create households, contacts, pets, and bookings through the API.
 - Web actions cover booking status changes, care-task completion/skipping, charge creation, and
   partial or multi-charge payment allocation. Editing existing records is not complete yet.
+- The request-review page supports manual message capture and review decisions.
 
 ## Database
 

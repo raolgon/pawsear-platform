@@ -35,6 +35,9 @@ The schema should stay explicit and portable. SQL should live in migration and q
 - Use `ON DELETE RESTRICT` for historical business records by default.
 - Use nullable foreign keys when the real world can be unknown at creation time.
 - Avoid cascading deletes for bookings, charges, payments, and messages.
+- Household deletion is an explicit application transaction, never an implicit database
+  cascade. It removes household-owned operational records in dependency order, preserves
+  the global payment ledger, and removes contacts only when they are otherwise unreferenced.
 
 ## Core Tables
 
@@ -84,6 +87,24 @@ Indexes:
 - `idx_contacts_phone`
 - `idx_contacts_whatsapp_id`
 - `idx_contacts_telegram_id`
+
+### contact_channel_identities
+
+Normalized external identities used to recognize individual Telegram or WhatsApp
+senders without assuming one user per household.
+
+| Column | Type | Notes |
+| --- | --- | --- |
+| id | TEXT PK | Application-generated ID |
+| contact_id | TEXT NOT NULL FK | References `contacts.id` |
+| channel | TEXT NOT NULL | telegram, whatsapp |
+| external_user_id | TEXT NOT NULL | Channel-specific sender/user ID |
+| created_at | TEXT NOT NULL | UTC |
+| updated_at | TEXT NOT NULL | UTC |
+
+`(channel, external_user_id)` is unique. Existing `contacts.telegram_id` and
+`contacts.whatsapp_id` values are backfilled for compatibility and can be retired after
+all contact editing flows use this table.
 
 ### household_contacts
 
@@ -358,6 +379,29 @@ Rules enforced in the Go domain service:
 - Payment allocation changes should happen in a database transaction.
 - Payment and charge currency must match before allocation.
 
+### payment_receipts
+
+Stores one immutable internal payment confirmation per payment. PDF and PNG files are
+rendered on demand from the same saved snapshot, so later edits to contacts, households,
+or charge labels do not alter an issued receipt.
+
+| Column | Type | Notes |
+| --- | --- | --- |
+| id | TEXT PK | Application-generated ID |
+| payment_id | TEXT NOT NULL FK | References `payments.id`; unique |
+| receipt_number | TEXT NOT NULL | Human-readable unique receipt identifier |
+| snapshot_json | TEXT NOT NULL | Frozen payer, payment, allocation, charge, and household labels |
+| issued_at | TEXT NOT NULL | UTC issue time |
+| created_at | TEXT NOT NULL | UTC |
+
+Receipt rules:
+
+- A receipt confirms money received and is not a fiscal invoice or CFDI.
+- Repeating the issue action returns the existing receipt.
+- Issuing or downloading a receipt never changes payment allocations.
+- Care notes, addresses, and medical information are excluded from the snapshot.
+- Delivery integrations are not part of the local prototype.
+
 ## Conversations And Message Capture
 
 ### conversations
@@ -395,12 +439,14 @@ Stores imported or captured message text.
 | sent_at | TEXT | UTC if known |
 | imported_at | TEXT NOT NULL | UTC |
 | external_message_id | TEXT | Channel-specific ID when available |
+| sender_external_id | TEXT | Channel-specific sender ID used for reviewed contact linking |
 
 Indexes:
 
 - `idx_messages_conversation_id`
 - `idx_messages_sender_contact_id`
 - `idx_messages_sent_at`
+- `idx_messages_sender_external_id`
 
 ### detected_requests
 
@@ -452,6 +498,29 @@ Rules:
 
 - At least one of `message_id` or `detected_request_id` should be present.
 - A booking can have multiple source records if later context is added, but the first source should be preserved.
+
+### outbound_messages
+
+Persistent queue of operator-approved channel replies. n8n delivers these records but
+does not decide their content or mutate request state directly.
+
+| Column | Type | Notes |
+| --- | --- | --- |
+| id | TEXT PK | Application-generated ID |
+| detected_request_id | TEXT NOT NULL FK | Source review request |
+| channel | TEXT NOT NULL | Telegram in the current version |
+| recipient_external_id | TEXT NOT NULL | Telegram chat ID |
+| template_key | TEXT NOT NULL | request_details, booking_confirmed, request_declined |
+| body | TEXT NOT NULL | Rendered operator-approved message |
+| status | TEXT NOT NULL | pending, sent, failed, cancelled |
+| attempts | INTEGER NOT NULL | Delivery attempts acknowledged by Pawsear |
+| last_error | TEXT | Truncated delivery failure detail |
+| created_at | TEXT NOT NULL | UTC |
+| sent_at | TEXT | UTC |
+| updated_at | TEXT NOT NULL | UTC |
+
+Only one pending reply may exist for a request. Queue creation and the associated
+request-state transition happen in one SQLite transaction.
 
 ## Domain Services In Go
 

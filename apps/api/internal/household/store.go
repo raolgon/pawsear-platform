@@ -14,14 +14,71 @@ type Store interface {
 	Get(ctx context.Context, id string) (Household, error)
 	List(ctx context.Context) ([]Household, error)
 	Update(ctx context.Context, params updateParams) (Household, error)
+	Delete(ctx context.Context, id string) error
 }
 
 type SQLStore struct {
-	queries *dbqueries.Queries
+	database *sql.DB
+	queries  *dbqueries.Queries
 }
 
 func NewSQLStore(database *sql.DB) *SQLStore {
-	return &SQLStore{queries: dbqueries.New(database)}
+	return &SQLStore{database: database, queries: dbqueries.New(database)}
+}
+
+func (s *SQLStore) Delete(ctx context.Context, id string) error {
+	tx, err := s.database.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("%w: begin household deletion: %v", ErrStoreIssue, err)
+	}
+	defer tx.Rollback()
+	queries := s.queries.WithTx(tx)
+	contactIDs, err := queries.ListHouseholdContactIDsForDeletion(ctx, id)
+	if err != nil {
+		return fmt.Errorf("%w: list household contacts for deletion: %v", ErrStoreIssue, err)
+	}
+	nullableID := sql.NullString{String: id, Valid: true}
+	steps := []func() error{
+		func() error { return queries.DeleteHouseholdBookingSources(ctx, id) },
+		func() error { return queries.DeleteHouseholdPaymentAllocations(ctx, id) },
+		func() error { return queries.DeleteHouseholdOutboundMessages(ctx, nullableID) },
+		func() error { return queries.DeleteHouseholdDetectedRequests(ctx, nullableID) },
+		func() error { return queries.DeleteHouseholdMessages(ctx, nullableID) },
+		func() error { return queries.DeleteHouseholdConversations(ctx, nullableID) },
+		func() error { return queries.DeleteHouseholdCareTasks(ctx, id) },
+		func() error { return queries.DeleteHouseholdCareRoutines(ctx, id) },
+		func() error { return queries.DeleteHouseholdCharges(ctx, id) },
+		func() error { return queries.DeleteHouseholdBookingPets(ctx, id) },
+		func() error { return queries.DeleteHouseholdBookings(ctx, id) },
+		func() error { return queries.DeleteHouseholdPetMedications(ctx, id) },
+		func() error { return queries.DeleteHouseholdPetDiets(ctx, id) },
+		func() error { return queries.DeleteHouseholdPets(ctx, id) },
+		func() error { return queries.DeleteHouseholdContactLinks(ctx, id) },
+	}
+	for _, step := range steps {
+		if err := step(); err != nil {
+			return fmt.Errorf("%w: delete household dependencies: %v", ErrStoreIssue, err)
+		}
+	}
+	deleted, err := queries.DeleteHouseholdRecord(ctx, id)
+	if err != nil {
+		return fmt.Errorf("%w: delete household: %v", ErrStoreIssue, err)
+	}
+	if deleted == 0 {
+		return ErrNotFound
+	}
+	for _, contactID := range contactIDs {
+		if err := queries.DeleteContactIdentitiesIfOtherwiseOrphaned(ctx, contactID); err != nil {
+			return fmt.Errorf("%w: delete orphaned contact identities: %v", ErrStoreIssue, err)
+		}
+		if err := queries.DeleteContactIfOrphaned(ctx, contactID); err != nil {
+			return fmt.Errorf("%w: delete orphaned contact: %v", ErrStoreIssue, err)
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("%w: commit household deletion: %v", ErrStoreIssue, err)
+	}
+	return nil
 }
 
 type createParams struct {

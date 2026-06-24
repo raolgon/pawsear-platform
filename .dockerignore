@@ -1,0 +1,14 @@
+.git
+.codex
+.agents
+node_modules
+.pnpm-store
+apps/web/node_modules
+apps/web/.svelte-kit
+apps/web/build
+apps/api/.gocache
+data
+*.db
+*.db-shm
+*.db-wal
+original-*.webp

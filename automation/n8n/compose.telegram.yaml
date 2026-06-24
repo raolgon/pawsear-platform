@@ -1,0 +1,5 @@
+services:
+  n8n:
+    environment:
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:?Set N8N_WEBHOOK_URL to the public HTTPS base URL}
+      N8N_PROXY_HOPS: "1"

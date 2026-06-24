@@ -11,16 +11,18 @@ const (
 )
 
 type Config struct {
-	HTTPAddr     string
-	DatabasePath string
-	SeedDemoData bool
+	HTTPAddr        string
+	DatabasePath    string
+	SeedDemoData    bool
+	AutomationToken string
 }
 
 func Load() (Config, error) {
 	cfg := Config{
-		HTTPAddr:     envOrDefault("PAWSEAR_HTTP_ADDR", defaultHTTPAddr),
-		DatabasePath: envOrDefault("PAWSEAR_DB_PATH", defaultDatabasePath),
-		SeedDemoData: envOrDefault("PAWSEAR_SEED_DEMO", "false") == "true",
+		HTTPAddr:        envOrDefault("PAWSEAR_HTTP_ADDR", defaultHTTPAddr),
+		DatabasePath:    envOrDefault("PAWSEAR_DB_PATH", defaultDatabasePath),
+		SeedDemoData:    envOrDefault("PAWSEAR_SEED_DEMO", "false") == "true",
+		AutomationToken: os.Getenv("PAWSEAR_AUTOMATION_TOKEN"),
 	}
 
 	if cfg.HTTPAddr == "" {

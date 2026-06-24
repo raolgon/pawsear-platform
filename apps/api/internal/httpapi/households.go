@@ -72,6 +72,21 @@ func (h *householdHandler) update(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, updated)
 }
 
+func (h *householdHandler) delete(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		ConfirmationName string `json:"confirmationName"`
+	}
+	if err := readJSON(r, &input); err != nil {
+		writeError(w, err)
+		return
+	}
+	if err := h.service.Delete(r.Context(), r.PathValue("id"), input.ConfirmationName); err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
+}
+
 func householdStatus(err error) (int, string) {
 	switch {
 	case errors.Is(err, household.ErrNotFound):

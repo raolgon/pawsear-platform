@@ -1,0 +1,88 @@
+{
+  "id": "d58e3965-1869-4266-a3ca-29c5e9012952",
+  "name": "Pawsear - Message webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pawsear-message",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "9baa83df-9317-4ceb-b438-f499a20c4f68",
+      "name": "Receive message",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "pawsear-message"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "channel", "name": "channel", "type": "string", "value": "={{ $json.body.channel }}" },
+            { "id": "conversation", "name": "externalConversationId", "type": "string", "value": "={{ $json.body.externalConversationId }}" },
+            { "id": "message", "name": "externalMessageId", "type": "string", "value": "={{ $json.body.externalMessageId }}" },
+            { "id": "sender", "name": "senderExternalId", "type": "string", "value": "={{ $json.body.senderExternalId || '' }}" },
+            { "id": "direction", "name": "direction", "type": "string", "value": "={{ $json.body.direction || 'inbound' }}" },
+            { "id": "body", "name": "body", "type": "string", "value": "={{ $json.body.body }}" },
+            { "id": "sent", "name": "sentAt", "type": "string", "value": "={{ $json.body.sentAt || new Date().toISOString() }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ffb579d4-58c8-4934-b968-5b75b65ea84f",
+      "name": "Normalize message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8080/api/message-imports",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env.PAWSEAR_AUTOMATION_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "561a4ce8-67ee-4025-bcc8-3aa5934973c4",
+      "name": "Import into Pawsear",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 0],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive message": {
+      "main": [[{ "node": "Normalize message", "type": "main", "index": 0 }]]
+    },
+    "Normalize message": {
+      "main": [[{ "node": "Import into Pawsear", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "executionTimeout": 120
+  },
+  "versionId": "b3411f8d-b15b-4a08-90c2-0873e8d06875",
+  "meta": { "templateCredsSetupCompleted": false },
+  "tags": []
+}

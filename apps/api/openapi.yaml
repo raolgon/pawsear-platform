@@ -1,0 +1,541 @@
+openapi: 3.1.0
+info:
+  title: Pawsear Message Automation API
+  version: 0.1.0
+  description: >-
+    Local-first API for importing WhatsApp, Telegram, or manually captured messages,
+    reviewing detected requests, and converting reviewed requests into bookings.
+    Imported messages never create bookings automatically.
+servers:
+  - url: http://127.0.0.1:8080
+    description: Local Pawsear API
+tags:
+  - name: System
+  - name: Message imports
+  - name: Request review
+paths:
+  /health:
+    get:
+      tags: [System]
+      summary: Check API and SQLite availability
+      operationId: getHealth
+      responses:
+        '200':
+          description: API and database are ready.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, const: ok }
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /api/meta:
+    get:
+      tags: [System]
+      summary: Describe the local API instance
+      operationId: getMeta
+      responses:
+        '200':
+          description: API metadata.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [name, mode, timestamp]
+                properties:
+                  name: { type: string, example: pawsear-api }
+                  mode: { type: string, const: local-first }
+                  timestamp: { type: string, format: date-time }
+  /api/message-imports:
+    post:
+      tags: [Message imports]
+      summary: Import one source message into the review queue
+      description: >-
+        Uses channel, externalConversationId, and externalMessageId as an idempotency key.
+        A new import returns 201. A retry of the same source event returns the original
+        records with duplicate=true and status 200. Bearer authentication is required
+        when PAWSEAR_AUTOMATION_TOKEN is configured. Without an explicit suggestion,
+        a conservative local parser may suggest service, date, time, and duration; all
+        suggested values still require human review.
+      operationId: importMessage
+      security:
+        - automationToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageImportInput'
+            examples:
+              telegram:
+                value:
+                  channel: telegram
+                  externalConversationId: '9988123'
+                  externalMessageId: '184'
+                  senderExternalId: '5511223'
+                  direction: inbound
+                  body: ¿Puedes pasear a Luna mañana a las 8?
+                  sentAt: '2026-06-21T14:00:00Z'
+      responses:
+        '200':
+          description: Duplicate event; the existing import is returned.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MessageImportResult' }
+        '201':
+          description: Message and review request created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MessageImportResult' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /api/detected-requests:
+    get:
+      tags: [Request review]
+      summary: List the review queue
+      operationId: listDetectedRequests
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/DetectedRequestStatus' }
+      responses:
+        '200':
+          description: Review requests ordered newest first.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [detectedRequests]
+                properties:
+                  detectedRequests:
+                    type: array
+                    items: { $ref: '#/components/schemas/DetectedRequestDetail' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /api/detected-requests/{id}:
+    parameters:
+      - $ref: '#/components/parameters/DetectedRequestID'
+    get:
+      tags: [Request review]
+      summary: Get a review request with its source message
+      operationId: getDetectedRequest
+      responses:
+        '200':
+          description: Review request detail.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DetectedRequestDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    patch:
+      tags: [Request review]
+      summary: Record a human review decision
+      description: Converted requests are terminal. Ignored requests can only be reopened to needs_review.
+      operationId: updateDetectedRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DetectedRequestUpdateInput'
+      responses:
+        '200':
+          description: Updated request.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DetectedRequest' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /api/detected-requests/{id}/bookings:
+    parameters:
+      - $ref: '#/components/parameters/DetectedRequestID'
+    post:
+      tags: [Request review]
+      summary: Convert a reviewed request into a booking
+      description: >-
+        Creates the booking, booking-pet links, booking_sources record, and terminal
+        detected-request update in one SQLite transaction. Missing household, contact,
+        service, start, and end values fall back to detected values when available.
+      operationId: convertDetectedRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BookingConversionInput' }
+            examples:
+              confirmedWalk:
+                value:
+                  status: confirmed
+                  startAt: '2026-06-22T14:00:00Z'
+                  petIds: [01JYEXAMPLEPET]
+                  reviewNotes: Confirmed with the primary contact
+      responses:
+        '201':
+          description: Booking created and linked to the original message.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BookingConversionResult' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /api/detected-requests/{id}/contact-link:
+    parameters:
+      - $ref: '#/components/parameters/DetectedRequestID'
+    post:
+      tags: [Request review]
+      summary: Remember the contact who sent a channel message
+      description: >-
+        Links the sender identity to an existing contact and refreshes the contact and
+        primary household context on the source message, conversation, and request.
+        Future messages from the same sender are matched automatically.
+      operationId: linkDetectedRequestContact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contactId: { type: string }
+                displayName: { type: string }
+                householdId: { type: string }
+                role: { type: string, default: owner }
+      responses:
+        '200':
+          description: Sender identity and request context linked.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DetectedRequestDetail' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /api/detected-requests/{id}/household-link:
+    parameters:
+      - $ref: '#/components/parameters/DetectedRequestID'
+    post:
+      tags: [Request review]
+      summary: Select and remember the household for an ambiguous conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [householdId]
+              properties:
+                householdId: { type: string }
+      responses:
+        '200':
+          description: Request and conversation household updated.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DetectedRequestDetail' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/detected-requests/{id}/replies:
+    parameters:
+      - $ref: '#/components/parameters/DetectedRequestID'
+    post:
+      tags: [Telegram replies]
+      summary: Queue an operator-approved reply template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OutboundReplyInput' }
+      responses:
+        '201':
+          description: Reply persisted and queued.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OutboundMessage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/outbound-messages:
+    get:
+      tags: [Telegram replies]
+      summary: List local outbound delivery history
+      responses:
+        '200':
+          description: Outbound messages newest first.
+  /api/automation/outbound-messages:
+    get:
+      tags: [Telegram replies]
+      summary: Load messages pending automation delivery
+      security: [{ automationToken: [] }]
+      responses:
+        '200':
+          description: Pending outbound messages.
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/automation/outbound-messages/{id}:
+    patch:
+      tags: [Telegram replies]
+      summary: Record an automation delivery result
+      security: [{ automationToken: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [sent, failed] }
+                error: { type: [string, 'null'] }
+      responses:
+        '200':
+          description: Delivery status updated.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OutboundMessage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+components:
+  securitySchemes:
+    automationToken:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque local token
+  parameters:
+    DetectedRequestID:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+  responses:
+    BadRequest:
+      description: The JSON or domain input is invalid.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: The configured automation token is missing or invalid.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: The requested record does not exist.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: The requested state transition conflicts with current state.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    InternalError:
+      description: A local persistence operation failed.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ServiceUnavailable:
+      description: SQLite is not available.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [status, error]
+            properties:
+              status: { type: string, const: unhealthy }
+              error: { type: string }
+  schemas:
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error: { type: string, example: invalid_request }
+        message: { type: string }
+    MessageChannel:
+      type: string
+      enum: [telegram, whatsapp, manual]
+    MessageDirection:
+      type: string
+      enum: [inbound, outbound, system]
+      default: inbound
+    Confidence:
+      type: string
+      enum: [unknown, low, medium, high]
+      default: unknown
+    DetectedRequestStatus:
+      type: string
+      enum: [needs_review, confirmed, ignored, needs_more_info, converted_to_booking]
+    DetectedSuggestion:
+      type: object
+      properties:
+        householdId: { type: string }
+        contactId: { type: string }
+        serviceType: { $ref: '#/components/schemas/ServiceType' }
+        startAt: { type: [string, 'null'], format: date-time }
+        endAt: { type: [string, 'null'], format: date-time }
+        confidence: { $ref: '#/components/schemas/Confidence' }
+    MessageImportInput:
+      type: object
+      required: [channel, body]
+      properties:
+        channel: { $ref: '#/components/schemas/MessageChannel' }
+        externalConversationId: { type: string }
+        externalMessageId: { type: string }
+        senderExternalId: { type: string }
+        direction: { $ref: '#/components/schemas/MessageDirection' }
+        body: { type: string, minLength: 1, maxLength: 20000 }
+        sentAt: { type: [string, 'null'], format: date-time }
+        suggestion: { $ref: '#/components/schemas/DetectedSuggestion' }
+      allOf:
+        - if:
+            properties:
+              channel: { enum: [telegram, whatsapp] }
+          then:
+            required: [externalConversationId, externalMessageId]
+    ConversationSummary:
+      type: object
+      required: [id, channel]
+      properties:
+        id: { type: string }
+        channel: { $ref: '#/components/schemas/MessageChannel' }
+        externalConversationId: { type: [string, 'null'] }
+    MessageSummary:
+      type: object
+      required: [id, body]
+      properties:
+        id: { type: string }
+        body: { type: string }
+        externalMessageId: { type: [string, 'null'] }
+        sentAt: { type: [string, 'null'], format: date-time }
+    DetectedRequest:
+      type: object
+      required: [id, messageId, confidence, status, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        messageId: { type: string }
+        householdId: { type: [string, 'null'] }
+        contactId: { type: [string, 'null'] }
+        serviceType: { oneOf: [{ $ref: '#/components/schemas/ServiceType' }, { type: 'null' }] }
+        startAt: { type: [string, 'null'], format: date-time }
+        endAt: { type: [string, 'null'], format: date-time }
+        confidence: { $ref: '#/components/schemas/Confidence' }
+        status: { $ref: '#/components/schemas/DetectedRequestStatus' }
+        convertedBookingId: { type: [string, 'null'] }
+        reviewNotes: { type: [string, 'null'] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    DetectedRequestDetail:
+      allOf:
+        - $ref: '#/components/schemas/DetectedRequest'
+        - type: object
+          required: [channel, body, householdName, contactName]
+          properties:
+            householdName: { type: string }
+            contactName: { type: string }
+            channel: { $ref: '#/components/schemas/MessageChannel' }
+            body: { type: string }
+            sentAt: { type: [string, 'null'], format: date-time }
+            externalMessageId: { type: [string, 'null'] }
+            senderExternalId: { type: [string, 'null'] }
+            externalConversationId: { type: [string, 'null'] }
+            convertedBookingStartAt: { type: [string, 'null'], format: date-time }
+            convertedBookingHouseholdId: { type: [string, 'null'] }
+    MessageImportResult:
+      type: object
+      required: [duplicate, conversation, message, detectedRequest]
+      properties:
+        duplicate: { type: boolean }
+        conversation: { $ref: '#/components/schemas/ConversationSummary' }
+        message: { $ref: '#/components/schemas/MessageSummary' }
+        detectedRequest: { $ref: '#/components/schemas/DetectedRequest' }
+    DetectedRequestUpdateInput:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [needs_review, confirmed, ignored, needs_more_info]
+        reviewNotes: { type: [string, 'null'] }
+    OutboundReplyInput:
+      type: object
+      required: [templateKey]
+      properties:
+        templateKey:
+          type: string
+          enum: [request_details, booking_confirmed, request_declined]
+    OutboundMessage:
+      type: object
+      required: [id, detectedRequestId, channel, recipientExternalId, templateKey, body, status, attempts, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        detectedRequestId: { type: string }
+        channel: { type: string, const: telegram }
+        recipientExternalId: { type: string }
+        templateKey: { type: string }
+        body: { type: string }
+        status: { type: string, enum: [pending, sent, failed, cancelled] }
+        attempts: { type: integer }
+        lastError: { type: [string, 'null'] }
+        createdAt: { type: string, format: date-time }
+        sentAt: { type: [string, 'null'], format: date-time }
+        updatedAt: { type: string, format: date-time }
+    ServiceType:
+      type: string
+      enum: [walk, client_home_sitting, boarding, visit, transport, other]
+    BookingStatus:
+      type: string
+      enum: [requested, confirmed]
+      default: requested
+    BookingConversionInput:
+      type: object
+      properties:
+        householdId: { type: string }
+        serviceType: { $ref: '#/components/schemas/ServiceType' }
+        status: { $ref: '#/components/schemas/BookingStatus' }
+        startAt: { type: string, format: date-time }
+        endAt: { type: [string, 'null'], format: date-time }
+        locationType:
+          type: string
+          enum: [household_home, caregiver_home, other]
+          default: household_home
+        addressSnapshot: { type: [string, 'null'] }
+        requestedByContactId: { type: [string, 'null'] }
+        assignedStaffId: { type: [string, 'null'] }
+        notes: { type: [string, 'null'] }
+        petIds:
+          type: array
+          uniqueItems: true
+          items: { type: string }
+        reviewNotes: { type: [string, 'null'] }
+        sourceNote: { type: [string, 'null'] }
+    Booking:
+      type: object
+      required: [id, householdId, serviceType, status, startAt, locationType, source, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        householdId: { type: string }
+        serviceType: { $ref: '#/components/schemas/ServiceType' }
+        status: { type: string }
+        startAt: { type: string, format: date-time }
+        endAt: { type: [string, 'null'], format: date-time }
+        locationType: { type: string }
+        requestedByContactId: { type: [string, 'null'] }
+        assignedStaffId: { type: [string, 'null'] }
+        source: { type: string }
+        notes: { type: [string, 'null'] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    BookingConversionResult:
+      type: object
+      required: [booking, detectedRequest]
+      properties:
+        booking: { $ref: '#/components/schemas/Booking' }
+        detectedRequest: { $ref: '#/components/schemas/DetectedRequest' }

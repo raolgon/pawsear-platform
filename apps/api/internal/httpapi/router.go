@@ -7,6 +7,10 @@ import (
 )
 
 func NewRouter(database *sql.DB) http.Handler {
+	return NewRouterWithAutomationToken(database, "")
+}
+
+func NewRouterWithAutomationToken(database *sql.DB, automationToken string) http.Handler {
 	mux := http.NewServeMux()
 	households := newHouseholdHandler(database)
 	mvp := newMVPHandler(database)
@@ -38,10 +42,12 @@ func NewRouter(database *sql.DB) http.Handler {
 	mux.HandleFunc("POST /api/households", households.create)
 	mux.HandleFunc("GET /api/households/{id}", households.get)
 	mux.HandleFunc("PATCH /api/households/{id}", households.update)
+	mux.HandleFunc("DELETE /api/households/{id}", households.delete)
 	mux.HandleFunc("GET /api/households/{id}/contacts", mvp.listHouseholdContacts)
 	mux.HandleFunc("POST /api/households/{id}/contacts", mvp.linkHouseholdContact)
 
 	mux.HandleFunc("GET /api/contacts", mvp.listContacts)
+	mux.HandleFunc("GET /api/contact-household-links", mvp.listContactHouseholdResolutionOptions)
 	mux.HandleFunc("POST /api/contacts", mvp.createContact)
 	mux.HandleFunc("GET /api/contacts/{id}", mvp.getContact)
 	mux.HandleFunc("PATCH /api/contacts/{id}", mvp.updateContact)
@@ -74,8 +80,23 @@ func NewRouter(database *sql.DB) http.Handler {
 	mux.HandleFunc("GET /api/payments", mvp.listPayments)
 	mux.HandleFunc("POST /api/payments", mvp.createPayment)
 	mux.HandleFunc("GET /api/payments/{id}", mvp.getPayment)
+	mux.HandleFunc("POST /api/payments/{id}/receipt", mvp.issuePaymentReceipt)
+	mux.HandleFunc("GET /api/payments/{id}/receipt", mvp.getPaymentReceiptByPayment)
+	mux.HandleFunc("GET /api/payments/{id}/receipt/{format}", mvp.downloadPaymentReceipt)
 
 	mux.HandleFunc("GET /api/dashboard/today", mvp.dashboardToday)
+
+	mux.Handle("POST /api/message-imports", requireAutomationToken(automationToken, http.HandlerFunc(mvp.importMessage)))
+	mux.HandleFunc("GET /api/detected-requests", mvp.listDetectedRequests)
+	mux.HandleFunc("GET /api/detected-requests/{id}", mvp.getDetectedRequest)
+	mux.HandleFunc("PATCH /api/detected-requests/{id}", mvp.updateDetectedRequest)
+	mux.HandleFunc("POST /api/detected-requests/{id}/contact-link", mvp.linkDetectedRequestContact)
+	mux.HandleFunc("POST /api/detected-requests/{id}/household-link", mvp.linkDetectedRequestHousehold)
+	mux.HandleFunc("POST /api/detected-requests/{id}/bookings", mvp.convertDetectedRequest)
+	mux.HandleFunc("POST /api/detected-requests/{id}/replies", mvp.queueOutboundReply)
+	mux.HandleFunc("GET /api/outbound-messages", mvp.listOutboundMessages)
+	mux.Handle("GET /api/automation/outbound-messages", requireAutomationToken(automationToken, http.HandlerFunc(mvp.listOutboundMessages)))
+	mux.Handle("PATCH /api/automation/outbound-messages/{id}", requireAutomationToken(automationToken, http.HandlerFunc(mvp.updateOutboundDelivery)))
 
 	return mux
 }

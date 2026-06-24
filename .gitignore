@@ -20,6 +20,10 @@ bin/
 *.test
 coverage.out
 
+# Python
+__pycache__/
+*.py[cod]
+
 # local data
 data/*
 !data/.gitkeep

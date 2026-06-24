@@ -44,7 +44,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,
-		Handler:           httpapi.NewRouter(database),
+		Handler:           httpapi.NewRouterWithAutomationToken(database, cfg.AutomationToken),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
